@@ -1,6 +1,6 @@
-import { Heart, Star, CalendarDays } from 'lucide-react'
+import { Heart, Star, CalendarDays, GitCompareArrows } from 'lucide-react'
 
-export default function GameCard({ game, saved, onToggleSave, onOpen }) {
+export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare, comparing, libraryStatus, onLibraryStatus }) {
   const platforms = (game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
   const image = game.background_image
 
@@ -28,9 +28,10 @@ export default function GameCard({ game, saved, onToggleSave, onOpen }) {
         </div>
         <button className="game-title" onClick={() => onOpen(game)}>{game.name}</button>
         <div className="game-card-bottom">
-          <span className="rating"><Star size={14} fill="currentColor" /> {Number(game.rating || 0).toFixed(1)}</span>
+          <span className="rating"><Star size={14} fill="currentColor" /> {game.rating ? Number(game.rating).toFixed(1) : "N/A"}</span>
           <span className="platform-count">{platforms.length || '—'} platforms</span>
         </div>
+        <div className="card-actions"><select aria-label={`Track ${game.name}`} value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Track game</option><option value="want">Want to play</option><option value="playing">Playing</option><option value="completed">Completed</option></select><button className={comparing ? 'compare-selected' : ''} onClick={() => onCompare(game)} title="Compare game" aria-label={`Compare ${game.name}`}><GitCompareArrows size={15}/></button></div>
       </div>
     </article>
   )

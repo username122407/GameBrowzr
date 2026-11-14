@@ -15,7 +15,7 @@ const storeSearch = {
   Android: [['Google Play', name => `https://play.google.com/store/search?q=${encodeURIComponent(name)}&c=apps`]],
 }
 
-export default function GameModal({ game, saved, onClose, onToggleSave }) {
+export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus }) {
   const [details, setDetails] = useState(game)
   const [loading, setLoading] = useState(false)
 
@@ -78,6 +78,8 @@ export default function GameModal({ game, saved, onClose, onToggleSave }) {
             <div className="section-heading"><span className="description-dot" /><h3>About the game</h3></div>
             {loading ? <p className="muted">Loading game description…</p> : <p className="description-text">{description || 'A description is not available for this game.'}</p>}
           </div>
+          {details.screenshots?.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{details.screenshots.map((url, i) => <a key={url} href={url} target="_blank" rel="noreferrer" aria-label={`Open screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></a>)}</div></div>}
+          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><select className="modal-status" value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Not in my library</option><option value="want">Want to play</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>
           <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} onClick={() => onToggleSave(game)}>
             <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
           </button>
