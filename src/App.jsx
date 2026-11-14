@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Gamepad2, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle } from 'lucide-react'
+import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle } from 'lucide-react'
 import { getGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
@@ -43,6 +43,8 @@ export default function App() {
   const [error, setError] = useState('')
   const [usingDemo, setUsingDemo] = useState(!apiProxyEnabled)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [featuredIndex, setFeaturedIndex] = useState(0)
+  const [spotlightPaused, setSpotlightPaused] = useState(false)
 
   const loadGames = useCallback(async ({ searchText = '', ordering = '-rating', platform = 'All platforms', genre = 'All genres', nextOffset = 0, append = false } = {}) => {
     if (append && loadingRef.current) return
@@ -99,6 +101,10 @@ export default function App() {
   }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore])
   useEffect(() => { localStorage.setItem('gamebrowzr-wishlist', JSON.stringify(wishlist)) }, [wishlist])
 
+  const spotlightGames = useMemo(() => games.filter(game => game.background_image).slice(0, 5), [games])
+  const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
+  useEffect(() => { setFeaturedIndex(0) }, [games])
+  useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover') return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab])
   const genres = catalogGenres
   const visibleGames = useMemo(() => {
     if (activeTab === 'discover') return games
@@ -140,40 +146,38 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="#" onClick={() => chooseTab('discover')}>
-          <span className="brand-mark"><Gamepad2 size={23} /></span>
-          <span>GAME<span>BROWZR</span></span>
-        </a>
-        <nav className={`main-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-          <button className={activeTab === 'discover' ? 'nav-link active' : 'nav-link'} onClick={() => chooseTab('discover')}><Library size={16} /> Discover</button>
-          <button className={activeTab === 'wishlist' ? 'nav-link active' : 'nav-link'} onClick={() => chooseTab('wishlist')}><Heart size={16} /> Wishlist <span className="nav-count">{wishlist.length}</span></button>
-          <button className={activeTab === 'library' ? 'nav-link active' : 'nav-link'} onClick={() => chooseTab('library')}><Library size={16} /> My library <span className="nav-count">{Object.keys(library).length}</span></button>
+      <aside className={`studio-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <a className="studio-brand" href="#" onClick={e => {e.preventDefault(); chooseTab('discover')}}><img src="/gamebrowzr-mark.webp" alt="GameBrowzr emblem"/><span>GAME<span>BROWZR</span><small>EXPLORE BEYOND</small></span></a>
+        <div className="sidebar-label">EXPLORE</div>
+        <nav className="studio-nav" aria-label="Main navigation">
+          <button className={activeTab === 'discover' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('discover')}><Compass size={18}/> Discover <ArrowRight size={14} className="link-arrow"/></button>
+          <button className={activeTab === 'wishlist' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('wishlist')}><Heart size={18}/> Wishlist <span className="side-count">{wishlist.length}</span></button>
+          <button className={activeTab === 'library' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('library')}><Library size={18}/> My library <span className="side-count">{Object.keys(library).length}</span></button>
         </nav>
-        <div className="topbar-right">
-          <span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Demo mode' : 'IGDB connected'}</span>
-          <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X /> : <Menu />}</button>
-        </div>
+        <div className="sidebar-label sidebar-label-secondary">QUICK EXPLORE</div>
+        <nav className="studio-nav" aria-label="Discovery shortcuts">
+          <button className="studio-link" onClick={() => {setQuery(''); setSort('-rating'); refreshGames('', '-rating')}}><Trophy size={18}/> Top rated</button>
+          <button className="studio-link" onClick={() => {setQuery(''); setSort('-released'); refreshGames('', '-released')}}><Flame size={18}/> New releases</button>
+          <button className="studio-link" onClick={() => {setQuery(''); setActiveGenre('Indie'); refreshGames('', sort, activePlatform, 'Indie')}}><Sparkles size={18}/> Indie gems</button>
+        </nav>
+        <div className="sidebar-bottom"><div className="sidebar-gradient-icon"><Gamepad2 size={21}/></div><strong>Make your next<br/>play unforgettable.</strong><span>Find games worth exploring.</span></div>
+      </aside>
+      <div className="studio-workspace">
+      <header className="studio-topbar">
+        <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
+        <div className="studio-location"><span>DISCOVER</span><span className="location-separator">/</span><strong>{activeTab === 'discover' ? 'Game store' : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
+        <div className="studio-top-actions"><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span><button className="top-avatar" onClick={() => chooseTab('library')} aria-label="Open my library"><Library size={18}/></button></div>
       </header>
-
       <main>
-        <section className="hero">
-          <div className="hero-orb orb-one" /><div className="hero-orb orb-two" />
-          <div className="hero-content">
-            <div className="hero-kicker"><Sparkles size={14} /> YOUR NEXT ADVENTURE STARTS HERE</div>
-            <h1>Find your next<br /><span>favorite game.</span></h1>
-            <p>Explore games across every platform. Discover what you can play and find the right store to get it.</p>
-            <form className="search-form" onSubmit={submitSearch}>
-              <Search size={19} />
-              <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search the IGDB catalog for any game…" aria-label="Search games" />
-              {query && <button type="button" className="clear-search" onClick={() => { setQuery(''); refreshGames('', sort) }} aria-label="Clear search"><X size={16} /></button>}
-              <button className="search-submit" type="submit">Search</button>
-            </form>
-            <div className="hero-tags"><span>Explore by platform</span>{['PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile'].map(tag => <button key={tag} onClick={() => { setActivePlatform(tag); refreshGames(query, sort, tag, activeGenre) }}>{tag}</button>)}</div>
+        <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>
+        {activeTab === 'discover' && <section className="spotlight-area" aria-label="Featured games" onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={() => setSpotlightPaused(false)}>
+          <div className="spotlight-main" style={featured?.background_image ? {backgroundImage:`linear-gradient(90deg,rgba(10,9,23,.83) 0%,rgba(10,9,23,.22) 100%),url(${featured.background_image})`} : undefined}>
+            <div className="spotlight-content"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
+            <div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>setFeaturedIndex(i)} aria-label={`Show featured game ${i+1}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div>
           </div>
-          <div className="hero-art" aria-hidden="true"><div className="art-ring ring-a" /><div className="art-ring ring-b" /><div className="art-controller"><Gamepad2 size={150} strokeWidth={1.1} /></div><span className="art-spark spark-a">✦</span><span className="art-spark spark-b">✧</span></div>
-        </section>
-
+          <div className="spotlight-side"><div className="side-feature"><span>YOUR LIBRARY</span><strong>Every adventure,<br/>in one place.</strong><p>Save it. Play it. Remember it.</p><button onClick={() => chooseTab('library')}>View library <ArrowRight size={15}/></button><div className="side-feature-glow"/></div><div className="side-mini"><span className="mini-icon"><Heart size={20}/></span><div><strong>{wishlist.length} saved games</strong><small>Your next adventures await</small></div><ArrowRight size={16}/></div></div>
+        </section>}
+        <section className="studio-search"><form className="search-form" onSubmit={submitSearch}><Search size={19}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search games, worlds, and adventures..." aria-label="Search games"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form><div className="studio-search-note"><span>EXPLORE PLATFORMS</span>{['PC','PlayStation','Xbox','Nintendo','Mobile'].map(tag=><button key={tag} onClick={()=>{setActivePlatform(tag);refreshGames(query,sort,tag,activeGenre)}}>{tag}</button>)}</div></section>
         <section className="catalog-section">
           <div className="section-topline">
             <div>
@@ -221,9 +225,10 @@ export default function App() {
           {activeTab === 'discover' && !usingDemo && hasMore && !loading && <div style={{ textAlign: 'center', padding: '28px 0' }}><div ref={loadMoreRef} aria-live="polite" style={{ color: '#b5a7d0' }}>{loadingMore ? 'Loading more games automatically…' : `Keep scrolling — more games load automatically`}</div></div>}
         </section>
       </main>
+      </div>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#"><Gamepad2 size={19} /> GAMEBROWZR</a>
+        <a className="footer-brand" href="#"><img src="/gamebrowzr-mark.webp" alt="" width="28" height="28" /> GAMEBROWZR</a>
         <p>Discover more. Play more. Find your next favorite.</p>
         <p className="footer-credit">Game data and images powered by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>. Store links open official storefront search pages. Availability and prices may vary.</p>
         <span className="copyright">© {new Date().getFullYear()} GameBrowzr · Student capstone project</span>
