@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle } from 'lucide-react'
+import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard } from 'lucide-react'
 import { getGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
@@ -45,6 +45,9 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [featuredIndex, setFeaturedIndex] = useState(0)
   const [spotlightPaused, setSpotlightPaused] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(48)
 
   const loadGames = useCallback(async ({ searchText = '', ordering = '-rating', platform = 'All platforms', genre = 'All genres', nextOffset = 0, append = false } = {}) => {
     if (append && loadingRef.current) return
@@ -56,6 +59,7 @@ export default function App() {
     try {
       const data = await getGames({ search: searchText, ordering, platform, genre, offset: nextOffset })
       if (requestId !== requestIdRef.current) return
+      if (!append) setVisibleCount(48)
       setGames(previous => append ? [...previous, ...(data.results || []).filter(item => !previous.some(old => old.id === item.id))] : (data.results || []))
       setOffset(data.nextOffset ?? nextOffset + (data.results || []).length)
       setHasMore(Boolean(data.hasMore))
@@ -79,6 +83,15 @@ export default function App() {
   }, [])
 
   useEffect(() => { loadGames() }, [loadGames])
+  useEffect(() => {
+    const handler = event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); document.querySelector('.search-form input')?.focus() }
+      if (event.key === 'Escape') { setShowSuggestions(false); setShowShortcuts(false) }
+      if (event.key === '?' && !['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) setShowShortcuts(v => !v)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
   useEffect(() => { const timer = setTimeout(() => setDebouncedQuery(query.trim()), 450); return () => clearTimeout(timer) }, [query])
   useEffect(() => { if (debouncedQuery !== '') loadGames({ searchText: debouncedQuery, ordering: sort, platform: activePlatform, genre: activeGenre }) }, [debouncedQuery, loadGames])
   useEffect(() => { localStorage.setItem('gamebrowzr-library', JSON.stringify(library)) }, [library])
@@ -88,9 +101,12 @@ export default function App() {
     setActiveTab('discover')
     loadGames({ searchText, ordering, platform, genre })
   }
-  const loadMore = useCallback(() => loadGames({ searchText: query, ordering: sort, platform: activePlatform, genre: activeGenre, nextOffset: offset, append: true }), [loadGames, query, sort, activePlatform, activeGenre, offset])
+  const loadMore = useCallback(() => {
+    if (visibleCount < games.length) { setVisibleCount(n => n + 48); return }
+    if (hasMore) loadGames({ searchText: query, ordering: sort, platform: activePlatform, genre: activeGenre, nextOffset: offset, append: true })
+  }, [loadGames, query, sort, activePlatform, activeGenre, offset, visibleCount, games.length, hasMore])
   useEffect(() => {
-    if (activeTab !== 'discover' || !hasMore || usingDemo || loading || loadingMore) return
+    if (activeTab !== 'discover' || (!hasMore && visibleCount >= games.length) || usingDemo || loading || loadingMore) return
     const node = loadMoreRef.current
     if (!node) return
     const observer = new IntersectionObserver(entries => {
@@ -98,7 +114,7 @@ export default function App() {
     }, { rootMargin: '600px' })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore])
+  }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore, visibleCount, games.length])
   useEffect(() => { localStorage.setItem('gamebrowzr-wishlist', JSON.stringify(wishlist)) }, [wishlist])
 
   const spotlightGames = useMemo(() => games.filter(game => game.background_image).slice(0, 5), [games])
@@ -106,6 +122,30 @@ export default function App() {
   useEffect(() => { setFeaturedIndex(0) }, [games])
   useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover') return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab])
   const genres = catalogGenres
+  const libraryEntries = Object.values(library)
+  const libraryStats = useMemo(() => {
+    const entries = Object.values(library)
+    const genreCounts = {}
+    const platformCounts = {}
+    for (const { game } of entries) {
+      for (const g of game.genres || []) genreCounts[g.name] = (genreCounts[g.name] || 0) + 1
+      for (const p of game.parent_platforms || []) { const n = p.platform?.name; if (n) platformCounts[n] = (platformCounts[n] || 0) + 1 }
+    }
+    return { genreCounts, platformCounts, topGenre: Object.entries(genreCounts).sort((a,b) => b[1]-a[1])[0]?.[0] }
+  }, [library])
+  const recommendations = useMemo(() => {
+    const saved = [...wishlist, ...libraryEntries.map(entry => entry.game)]
+    const interests = {}
+    saved.forEach(game => (game.genres || []).forEach(g => { interests[g.name] = (interests[g.name] || 0) + 1 }))
+    const existing = new Set(saved.map(g => g.id))
+    return games.filter(game => !existing.has(game.id) && game.background_image)
+      .map(game => ({ game, score: (game.genres || []).reduce((n,g) => n + (interests[g.name] || 0),0) * 10 + (game.rating || 0) }))
+      .sort((a,b) => b.score - a.score).slice(0, 8).map(item => item.game)
+  }, [games, wishlist, library])
+  const suggestions = useMemo(() => {
+    const text = query.trim().toLowerCase()
+    return text.length > 1 ? games.filter(game => game.name.toLowerCase().includes(text)).slice(0,5) : []
+  }, [query, games])
   const visibleGames = useMemo(() => {
     if (activeTab === 'discover') return games
     let result = activeTab === 'library' ? Object.values(library).filter(entry => libraryFilter === 'all' || entry.status === libraryFilter).map(entry => entry.game) : [...wishlist]
@@ -166,7 +206,7 @@ export default function App() {
       <header className="studio-topbar">
         <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
         <div className="studio-location"><span>DISCOVER</span><span className="location-separator">/</span><strong>{activeTab === 'discover' ? 'Game store' : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
-        <div className="studio-top-actions"><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span><button className="top-avatar" onClick={() => chooseTab('library')} aria-label="Open my library"><Library size={18}/></button></div>
+        <div className="studio-top-actions"><button className="shortcut-toggle" onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts"><Keyboard size={16}/> <span>Shortcuts</span></button><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span><button className="top-avatar" onClick={() => chooseTab('library')} aria-label="Open my library"><Library size={18}/></button></div>
       </header>
       <main>
         <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>
@@ -177,7 +217,13 @@ export default function App() {
           </div>
           <div className="spotlight-side"><div className="side-feature"><span>YOUR LIBRARY</span><strong>Every adventure,<br/>in one place.</strong><p>Save it. Play it. Remember it.</p><button onClick={() => chooseTab('library')}>View library <ArrowRight size={15}/></button><div className="side-feature-glow"/></div><div className="side-mini"><span className="mini-icon"><Heart size={20}/></span><div><strong>{wishlist.length} saved games</strong><small>Your next adventures await</small></div><ArrowRight size={16}/></div></div>
         </section>}
-        <section className="studio-search"><form className="search-form" onSubmit={submitSearch}><Search size={19}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search games, worlds, and adventures..." aria-label="Search games"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form><div className="studio-search-note"><span>EXPLORE PLATFORMS</span>{['PC','PlayStation','Xbox','Nintendo','Mobile'].map(tag=><button key={tag} onClick={()=>{setActivePlatform(tag);refreshGames(query,sort,tag,activeGenre)}}>{tag}</button>)}</div></section>
+        {activeTab === 'discover' && <section className="curated-section" aria-label="Personalized discoveries">
+          <div className="curated-head"><div><span className="eyebrow"><WandSparkles size={14}/> SMART DISCOVERY</span><h2>Picked for your taste <span className="heading-dot">.</span></h2><p>Recommendations based on your saved games and favorite genres, refreshed as you explore.</p></div><button className="surprise-button" onClick={() => { const pick = recommendations[Math.floor(Math.random()*recommendations.length)] || games[Math.floor(Math.random()*games.length)]; if (pick) setSelectedGame(pick) }}><Dices size={17}/> Surprise me</button></div>
+          <div className="curated-scroll">{recommendations.slice(0,6).map(game => <button className="curated-card" key={game.id} onClick={() => setSelectedGame(game)}><img src={game.background_image} alt="" loading="lazy"/><span>{game.name}</span><small>{game.genres?.slice(0,2).map(g=>g.name).join(' · ') || 'Discover'}</small></button>)}</div>
+          {!wishlist.length && !libraryEntries.length && <p className="recommendation-note">Save games to your wishlist or library to personalize these recommendations.</p>}
+        </section>}
+        {activeTab === 'library' && <section className="insights-panel"><div className="insights-title"><BarChart3 size={21}/><div><h2>Your gaming snapshot</h2><p>Insights from the games you've saved on this device.</p></div></div><div className="insight-grid"><div><span>Total tracked</span><strong>{libraryEntries.length}</strong></div><div><span>Completed</span><strong>{libraryEntries.filter(e=>e.status==='completed').length}</strong></div><div><span>Completion rate</span><strong>{libraryEntries.length ? Math.round(libraryEntries.filter(e=>e.status==='completed').length / libraryEntries.length * 100) : 0}%</strong></div><div><span>Favorite genre</span><strong className="insight-genre">{libraryStats.topGenre || 'Explore games'}</strong></div></div><div className="insights-bars">{Object.entries(libraryStats.genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,count])=><div className="insights-bar" key={name}><span>{name}</span><div><i style={{width:`${Math.max(8,count/Math.max(1,libraryEntries.length)*100)}%`}}/></div><b>{count}</b></div>)}</div></section>}
+        <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}<div className="studio-search-note"><span>EXPLORE PLATFORMS</span>{['PC','PlayStation','Xbox','Nintendo','Mobile'].map(tag=><button key={tag} onClick={()=>{setActivePlatform(tag);refreshGames(query,sort,tag,activeGenre)}}>{tag}</button>)}</div></section>
         <section className="catalog-section">
           <div className="section-topline">
             <div>
@@ -217,12 +263,12 @@ export default function App() {
 
           {loading ? <div className="skeleton-grid" aria-label="Loading games" aria-busy="true">{Array.from({length:12},(_,i)=><div className="skeleton-card" key={i}><div/><span/><span/></div>)}</div> : visibleGames.length ? (
             <div className="game-grid">
-              {visibleGames.map(game => <GameCard key={game.id} game={game} saved={isSaved(game)} onToggleSave={toggleWishlist} onOpen={setSelectedGame} onCompare={toggleCompare} comparing={compare.some(item => item.id === game.id)} libraryStatus={library[game.id]?.status || ""} onLibraryStatus={setLibraryStatus} />)}
+              {visibleGames.slice(0,visibleCount).map(game => <GameCard key={game.id} game={game} saved={isSaved(game)} onToggleSave={toggleWishlist} onOpen={setSelectedGame} onCompare={toggleCompare} comparing={compare.some(item => item.id === game.id)} libraryStatus={library[game.id]?.status || ""} onLibraryStatus={setLibraryStatus} />)}
             </div>
           ) : (
             <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : activeTab === 'library' ? 'Your library is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : activeTab === 'library' ? 'Mark games as Want to play, Playing, or Completed.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button></div>
           )}
-          {activeTab === 'discover' && !usingDemo && hasMore && !loading && <div style={{ textAlign: 'center', padding: '28px 0' }}><div ref={loadMoreRef} aria-live="polite" style={{ color: '#b5a7d0' }}>{loadingMore ? 'Loading more games automatically…' : `Keep scrolling — more games load automatically`}</div></div>}
+          {activeTab === 'discover' && !usingDemo && (hasMore || visibleCount < games.length) && !loading && <div className="render-more" ref={loadMoreRef} aria-live="polite"><p>{loadingMore ? 'Loading more discoveries…' : `Showing ${Math.min(visibleCount, games.length)} of ${games.length} loaded games · Scroll for more`}</p></div>}
         </section>
       </main>
       </div>
@@ -234,6 +280,7 @@ export default function App() {
         <span className="copyright">© {new Date().getFullYear()} GameBrowzr · Student capstone project</span>
       </footer>
 
+      {showShortcuts && <div className="shortcuts-overlay" onClick={() => setShowShortcuts(false)}><div className="shortcuts-box" onClick={e=>e.stopPropagation()}><button onClick={() => setShowShortcuts(false)} aria-label="Close"><X/></button><h2>Keyboard shortcuts</h2><p><kbd>Ctrl</kbd> + <kbd>K</kbd> Focus search</p><p><kbd>?</kbd> Open shortcuts</p><p><kbd>Esc</kbd> Close panels</p></div></div>}
       {selectedGame && <GameModal game={selectedGame} saved={isSaved(selectedGame)} onClose={() => setSelectedGame(null)} onToggleSave={toggleWishlist} libraryStatus={library[selectedGame.id]?.status || ''} onLibraryStatus={setLibraryStatus} />}
       {compare.length > 0 && <aside className="compare-tray" aria-label="Compare selected games"><span><GitCompareArrows size={17}/> Compare {compare.length}/3</span><div className="compare-names">{compare.map(item => <button key={item.id} onClick={() => toggleCompare(item)} title="Remove game">{item.name} ×</button>)}</div><button className="compare-open" disabled={compare.length < 2} onClick={() => document.getElementById('compare-dialog').showModal()}>Compare games</button><button className="compare-clear" onClick={() => setCompare([])} aria-label="Clear comparison"><X size={16}/></button></aside>}
       <dialog id="compare-dialog" className="compare-dialog" onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close() }}><div className="compare-header"><h2>Compare games</h2><button onClick={() => document.getElementById('compare-dialog').close()} aria-label="Close comparison"><X/></button></div><div className="compare-grid">{compare.map(game => <div key={game.id} className="compare-column">{game.background_image && <img src={game.background_image} alt=""/>}<h3>{game.name}</h3><p>Rating: {game.rating ? game.rating.toFixed(1) : 'N/A'}</p><p>Released: {game.released || 'Unknown'}</p><p>Genres: {game.genres?.map(g => g.name).join(', ') || 'Unknown'}</p><p>Platforms: {game.platforms?.join(', ') || 'Unknown'}</p></div>)}</div></dialog>

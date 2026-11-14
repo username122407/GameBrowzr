@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, ExternalLink, Star, CalendarDays, Monitor, Heart } from 'lucide-react'
+import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, CheckCircle2, Search } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
 
 const storeSearch = {
@@ -42,7 +42,11 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   }, [onClose])
 
   const platforms = (details.parent_platforms || game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
-  const stores = [...new Set(platforms)].flatMap(platform => (storeSearch[platform] || []).map(([label, makeUrl]) => ({ label, url: makeUrl(game.name) })))
+  const directStores = Array.isArray(details.storeLinks) ? details.storeLinks : []
+  const directLabels = new Set(directStores.map(store => store.label))
+  const searchStores = [...new Set(platforms)]
+    .flatMap(platform => (storeSearch[platform] || []).map(([label, makeUrl]) => ({ label, url: makeUrl(game.name) })))
+    .filter((store, index, all) => !directLabels.has(store.label) && all.findIndex(item => item.label === store.label) === index)
   const description = (details.description_raw || '').trim()
 
   return (
@@ -67,17 +71,27 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
             </div>
           </div>
           <div className="modal-section">
-            <div className="section-heading"><ExternalLink size={17} /><h3>Find this game</h3></div>
-            <p className="helper-text">These links open each platform's official store search. Availability, region, and price may vary; confirm the exact game before purchasing.</p>
-            <div className="store-grid">
-              {stores.map(store => <a className="store-link" href={store.url} target="_blank" rel="noreferrer" key={store.label}>{store.label}<ExternalLink size={14} /></a>)}
-              {!stores.length && <span className="muted">No store search links are available for the listed platforms.</span>}
-            </div>
+            <div className="section-heading"><ExternalLink size={17} /><h3>Where to play & buy</h3></div>
+            <p className="helper-text">Direct links below come from IGDB's game-specific external listings. Check the store page for the correct edition, region, price, and availability.</p>
+            {loading && <p className="muted" role="status">Checking direct storefront listings…</p>}
+            {!loading && directStores.length > 0 && <div className="store-grid">
+              {directStores.map(store => <a className="store-link store-link-direct" href={store.url} target="_blank" rel="noopener noreferrer" key={store.label + store.url}>
+                <span>{store.label}<small className="store-direct-badge"><CheckCircle2 size={12}/> Direct listing</small></span><ExternalLink size={15}/>
+              </a>)}
+            </div>}
+            {!loading && directStores.length === 0 && <p className="muted">No game-specific store listings are available in IGDB for this title.</p>}
+            {!loading && searchStores.length > 0 && <details className="store-fallback">
+              <summary><Search size={15}/> Other stores (search links only)</summary>
+              <p className="helper-text">These open store searches, not confirmed game pages.</p>
+              <div className="store-grid">{searchStores.map(store => <a className="store-link" href={store.url} target="_blank" rel="noopener noreferrer" key={store.label}>{store.label}<ExternalLink size={14}/></a>)}</div>
+            </details>}
           </div>
           <div className="modal-section">
             <div className="section-heading"><span className="description-dot" /><h3>About the game</h3></div>
             {loading ? <p className="muted">Loading game description…</p> : <p className="description-text">{description || 'A description is not available for this game.'}</p>}
           </div>
+          {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
+          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.map(video => <a href={`https://www.youtube.com/watch?v=${encodeURIComponent(video.id)}`} target="_blank" rel="noopener noreferrer" key={video.id}><img src={`https://img.youtube.com/vi/${encodeURIComponent(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></a>)}</div></div>}
           {details.screenshots?.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{details.screenshots.map((url, i) => <a key={url} href={url} target="_blank" rel="noreferrer" aria-label={`Open screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></a>)}</div></div>}
           <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><select className="modal-status" value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Not in my library</option><option value="want">Want to play</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>
           <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} onClick={() => onToggleSave(game)}>

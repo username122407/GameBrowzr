@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.slice(0, 100) : ''
     const ordering = ['-rating', '-released', 'name'].includes(req.query.ordering) ? req.query.ordering : '-rating'
-    const offset = Math.max(0, Number(req.query.offset) || 0)
+    const offset = Math.min(100000, Math.max(0, Math.floor(Number(req.query.offset) || 0)))
     const platform = typeof req.query.platform === 'string' ? req.query.platform : 'All platforms'
     const genre = typeof req.query.genre === 'string' ? req.query.genre : 'All genres'
     const page = await searchGames({ search, ordering, offset, platform, genre })
