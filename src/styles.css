@@ -213,3 +213,29 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 }
 @media(max-width:380px){.game-grid{gap:8px}.game-card{min-width:0}.filter-controls .aurora-select{min-width:calc(50% - 5px)}}
 @media(prefers-reduced-motion:reduce){.studio-sidebar,.mobile-drawer-backdrop,.mobile-drawer-close,.mobile-menu-button{transition:none!important;animation:none!important}}
+
+
+/* GameBrowzr 5.0.4 — Aurora scrollbars: Firefox + Chromium/WebKit */
+.aurora-select-menu {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(170, 117, 224, .58) transparent;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+.aurora-select-menu::-webkit-scrollbar { width: 7px; }
+.aurora-select-menu::-webkit-scrollbar-track { background: transparent; margin-block: 10px; }
+.aurora-select-menu::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(173,118,241,.8), rgba(119,76,171,.65));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.aurora-select-menu::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #c6a0ff, #9565d3);
+  background-clip: padding-box;
+}
+/* Keep mobile dropdowns touch-friendly and avoid bright system scrollbar chrome. */
+@media (pointer: coarse) {
+  .aurora-select-menu { scrollbar-width: none; scrollbar-gutter: auto; }
+  .aurora-select-menu::-webkit-scrollbar { display: none; }
+}
