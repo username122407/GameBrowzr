@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Gamepad2, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw } from 'lucide-react'
 import { getGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
@@ -6,6 +6,8 @@ import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
 
 const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile', 'iOS', 'Android']
+const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
+const PAGE_SIZE = 500
 const sortOptions = [
   { label: 'Top rated', value: '-rating' },
   { label: 'Recently released', value: '-released' },
@@ -24,48 +26,74 @@ export default function App() {
   })
   const [selectedGame, setSelectedGame] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const loadMoreRef = useRef(null)
+  const requestIdRef = useRef(0)
+  const loadingRef = useRef(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [offset, setOffset] = useState(0)
   const [error, setError] = useState('')
   const [usingDemo, setUsingDemo] = useState(!apiProxyEnabled)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const loadGames = useCallback(async (searchText = query, ordering = sort) => {
-    if (!apiProxyEnabled) {
-      setUsingDemo(true)
-      setError('')
-      if (searchText.trim()) {
-        setGames(demoGames.filter(game => game.name.toLowerCase().includes(searchText.toLowerCase())))
-      } else {
-        setGames(demoGames)
-      }
-      return
-    }
-    setLoading(true)
+  const loadGames = useCallback(async ({ searchText = '', ordering = '-rating', platform = 'All platforms', genre = 'All genres', nextOffset = 0, append = false } = {}) => {
+    if (append && loadingRef.current) return
+    const requestId = append ? requestIdRef.current : ++requestIdRef.current
+    loadingRef.current = true
+    if (!append) setLoading(true)
+    else setLoadingMore(true)
     setError('')
     try {
-      const data = await getGames({ search: searchText, ordering })
-      setGames(data.results || [])
+      const data = await getGames({ search: searchText, ordering, platform, genre, offset: nextOffset })
+      if (requestId !== requestIdRef.current) return
+      setGames(previous => append ? [...previous, ...(data.results || []).filter(item => !previous.some(old => old.id === item.id))] : (data.results || []))
+      setOffset(data.nextOffset ?? nextOffset + (data.results || []).length)
+      setHasMore(Boolean(data.hasMore))
       setUsingDemo(false)
     } catch (err) {
-      setError(`${err.message} Showing sample games instead.`)
-      setUsingDemo(true)
-      setGames(searchText.trim() ? demoGames.filter(game => game.name.toLowerCase().includes(searchText.toLowerCase())) : demoGames)
+      if (requestId !== requestIdRef.current) return
+      if (append) setError(`Could not load more games: ${err.message}`)
+      else {
+        setError(`${err.message} Showing sample games instead.`)
+        setUsingDemo(true)
+        setHasMore(false)
+        setGames(searchText.trim() ? demoGames.filter(game => game.name.toLowerCase().includes(searchText.toLowerCase())) : demoGames)
+      }
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) {
+        loadingRef.current = false
+        setLoading(false)
+        setLoadingMore(false)
+      }
     }
-  }, [query, sort])
+  }, [])
 
-  useEffect(() => { loadGames('', sort) }, []) // initial load
+  useEffect(() => { loadGames() }, [loadGames])
+  const refreshGames = (searchText = query, ordering = sort, platform = activePlatform, genre = activeGenre) => {
+    setActiveTab('discover')
+    loadGames({ searchText, ordering, platform, genre })
+  }
+  const loadMore = useCallback(() => loadGames({ searchText: query, ordering: sort, platform: activePlatform, genre: activeGenre, nextOffset: offset, append: true }), [loadGames, query, sort, activePlatform, activeGenre, offset])
+  useEffect(() => {
+    if (activeTab !== 'discover' || !hasMore || usingDemo || loading || loadingMore) return
+    const node = loadMoreRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0]?.isIntersecting) loadMore()
+    }, { rootMargin: '600px' })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore])
   useEffect(() => { localStorage.setItem('gamebrowzr-wishlist', JSON.stringify(wishlist)) }, [wishlist])
 
-  const genres = useMemo(() => ['All genres', ...new Set(games.flatMap(game => (game.genres || []).map(genre => genre.name)).filter(Boolean))], [games])
+  const genres = catalogGenres
   const visibleGames = useMemo(() => {
-    let result = activeTab === 'wishlist' ? [...wishlist] : [...games]
-    if (activePlatform !== 'All platforms') {
-      result = result.filter(game => (game.parent_platforms || []).some(item => {
-        const name = item.platform?.name?.toLowerCase()
-        return activePlatform === 'Mobile' ? ['ios', 'android'].includes(name) : name === activePlatform.toLowerCase()
-      }))
-    }
+    if (activeTab !== 'wishlist') return games
+    let result = [...wishlist]
+    if (activePlatform !== 'All platforms') result = result.filter(game => (game.parent_platforms || []).some(item => {
+      const name = item.platform?.name?.toLowerCase()
+      return activePlatform === 'Mobile' ? ['ios', 'android'].includes(name) : name === activePlatform.toLowerCase()
+    }))
     if (activeGenre !== 'All genres') result = result.filter(game => game.genres?.some(genre => genre.name === activeGenre))
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name))
     return result
@@ -78,14 +106,14 @@ export default function App() {
   const submitSearch = event => {
     event.preventDefault()
     setActiveTab('discover')
-    loadGames(query, sort)
+    refreshGames(query, sort)
   }
   const chooseTab = tab => {
     setActiveTab(tab)
     setMobileMenuOpen(false)
     setActivePlatform('All platforms')
     setActiveGenre('All genres')
-    if (tab === 'discover' && !games.length) loadGames('', sort)
+    if (tab === 'discover' && !games.length) refreshGames('', sort)
   }
 
   return (
@@ -115,10 +143,10 @@ export default function App() {
             <form className="search-form" onSubmit={submitSearch}>
               <Search size={19} />
               <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search games, genres, or titles…" aria-label="Search games" />
-              {query && <button type="button" className="clear-search" onClick={() => { setQuery(''); loadGames('', sort) }} aria-label="Clear search"><X size={16} /></button>}
+              {query && <button type="button" className="clear-search" onClick={() => { setQuery(''); refreshGames('', sort) }} aria-label="Clear search"><X size={16} /></button>}
               <button className="search-submit" type="submit">Search</button>
             </form>
-            <div className="hero-tags"><span>Explore by platform</span>{['PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile'].map(tag => <button key={tag} onClick={() => { setActiveTab('discover'); setActivePlatform(tag); }}>{tag}</button>)}</div>
+            <div className="hero-tags"><span>Explore by platform</span>{['PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile'].map(tag => <button key={tag} onClick={() => { setActivePlatform(tag); refreshGames(query, sort, tag, activeGenre) }}>{tag}</button>)}</div>
           </div>
           <div className="hero-art" aria-hidden="true"><div className="art-ring ring-a" /><div className="art-ring ring-b" /><div className="art-controller"><Gamepad2 size={150} strokeWidth={1.1} /></div><span className="art-spark spark-a">✦</span><span className="art-spark spark-b">✧</span></div>
         </section>
@@ -137,21 +165,21 @@ export default function App() {
             <div className="filter-label"><SlidersHorizontal size={16} /> FILTER BY</div>
             <div className="filter-select-wrap">
               <Monitor size={15} />
-              <select value={activePlatform} onChange={event => setActivePlatform(event.target.value)} aria-label="Filter by platform">
+              <select value={activePlatform} onChange={event => { setActivePlatform(event.target.value); refreshGames(query, sort, event.target.value, activeGenre) }} aria-label="Filter by platform">
                 {platformFilters.map(platform => <option key={platform}>{platform}</option>)}
               </select><ChevronDown size={14} />
             </div>
             <div className="filter-select-wrap">
-              <select value={activeGenre} onChange={event => setActiveGenre(event.target.value)} aria-label="Filter by genre">
+              <select value={activeGenre} onChange={event => { setActiveGenre(event.target.value); refreshGames(query, sort, activePlatform, event.target.value) }} aria-label="Filter by genre">
                 {genres.map(genre => <option key={genre}>{genre}</option>)}
               </select><ChevronDown size={14} />
             </div>
             <div className="filter-select-wrap sort-select">
-              <select value={sort} onChange={event => { setSort(event.target.value); loadGames(query, event.target.value) }} aria-label="Sort games">
+              <select value={sort} onChange={event => { setSort(event.target.value); refreshGames(query, event.target.value) }} aria-label="Sort games">
                 {sortOptions.map(option => <option value={option.value} key={option.value}>Sort: {option.label}</option>)}
               </select><ChevronDown size={14} />
             </div>
-            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres') }}>Reset filters</button>}
+            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres'); refreshGames(query, sort, 'All platforms', 'All genres') }}>Reset filters</button>}
           </div>
 
           {usingDemo && <div className="demo-notice"><span className="notice-dot" /><div><strong>Preview data is active.</strong> Configure your Twitch application credentials in Vercel to load the live game catalog. <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noreferrer">Create API credentials ↗</a></div></div>}
@@ -162,8 +190,9 @@ export default function App() {
               {visibleGames.map(game => <GameCard key={game.id} game={game} saved={isSaved(game)} onToggleSave={toggleWishlist} onOpen={setSelectedGame} />)}
             </div>
           ) : (
-            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActiveTab('discover'); setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); loadGames('', sort) }}>Explore games</button></div>
+            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button></div>
           )}
+          {activeTab === 'discover' && !usingDemo && hasMore && !loading && <div style={{ textAlign: 'center', padding: '28px 0' }}><div ref={loadMoreRef} aria-live="polite" style={{ color: '#b5a7d0' }}>{loadingMore ? 'Loading more games automatically…' : `Scroll to explore more games (up to ${PAGE_SIZE} per request)`}</div></div>}
         </section>
       </main>
 

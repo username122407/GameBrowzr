@@ -9,8 +9,8 @@ async function request(url) {
 // Requests go through Vercel serverless functions so Twitch credentials stay on the server.
 export const apiProxyEnabled = true
 
-export async function getGames({ search = '', ordering = '-rating' } = {}) {
-  const params = new URLSearchParams({ search, ordering })
+export async function getGames({ search = '', ordering = '-rating', offset = 0, platform = 'All platforms', genre = 'All genres' } = {}) {
+  const params = new URLSearchParams({ search, ordering, offset: String(offset), platform, genre })
   return request(`/api/games?${params.toString()}`)
 }
 

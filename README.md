@@ -165,3 +165,11 @@ Do not commit `.env.local` or any client secret.
 ---
 
 **Project status:** IGDB integration is prepared. Add your Twitch application credentials in Vercel, redeploy, and test the live catalog before capstone submission.
+
+## Expanded search and catalog (update)
+
+Search now queries IGDB directly instead of filtering the initial 40 games. The catalog loads 40 games per page with a Load More button, requesting additional pages as needed. IGDB does not provide a single unlimited request; results are subject to its catalog, rate limits, and search behavior. Platform and genre filters are applied server-side for the discovery catalog. Search relevance takes precedence over sort order while searching.
+
+
+## Maximum catalog loading
+The API now requests up to 500 games per page (IGDB maximum per request), and the catalog automatically fetches the next page when the user scrolls near the end. It does not fetch the whole IGDB database at once. This can be heavy on slow connections and browsers; consider reducing page size to 100 if performance suffers.
