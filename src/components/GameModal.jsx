@@ -1,3 +1,4 @@
+import AuroraSelect from './AuroraSelect'
 import { useEffect, useState } from 'react'
 import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
@@ -99,7 +100,7 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
           {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
           {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
           {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
-          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><select className="modal-status" value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Not in my library</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>
+          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
           <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} onClick={() => onToggleSave(game)}>
             <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
           </button>

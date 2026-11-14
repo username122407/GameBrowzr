@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard } from 'lucide-react'
+import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard } from 'lucide-react'
 import { getGames, getSpotlightGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
+import AuroraSelect from './components/AuroraSelect'
 
 const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile', 'iOS', 'Android']
 const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
@@ -13,6 +14,7 @@ const sortOptions = [
   { label: 'Recently released', value: '-released' },
   { label: 'Name A–Z', value: 'name' },
 ]
+
 
 export default function App() {
   const [games, setGames] = useState(demoGames)
@@ -48,8 +50,49 @@ export default function App() {
   const [error, setError] = useState('')
   const [usingDemo, setUsingDemo] = useState(!apiProxyEnabled)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const drawerTouchStart = useRef(null)
+  const drawerTouchLast = useRef(null)
+  const [drawerDrag, setDrawerDrag] = useState(0)
+  const openMobileMenu = () => { setDrawerDrag(0); setMobileMenuOpen(true) }
+  const closeMobileMenu = () => { setDrawerDrag(0); setMobileMenuOpen(false) }
+  const onDrawerTouchStart = event => {
+    if (event.touches.length !== 1) return
+    drawerTouchStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+    drawerTouchLast.current = drawerTouchStart.current
+  }
+  const onDrawerTouchMove = event => {
+    if (!drawerTouchStart.current || event.touches.length !== 1) return
+    const dx = event.touches[0].clientX - drawerTouchStart.current.x
+    const dy = event.touches[0].clientY - drawerTouchStart.current.y
+    // Let vertical scrolling inside the drawer work normally.
+    if (Math.abs(dy) > Math.abs(dx) && drawerDrag === 0) return
+    drawerTouchLast.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+    if (dx < 0) setDrawerDrag(Math.max(-280, dx))
+  }
+  const onDrawerTouchEnd = () => {
+    if (drawerDrag < -75) closeMobileMenu()
+    else setDrawerDrag(0)
+    drawerTouchStart.current = null
+    drawerTouchLast.current = null
+  }
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const onEscape = event => { if (event.key === 'Escape') closeMobileMenu() }
+    const onResize = () => { if (window.innerWidth > 820) closeMobileMenu() }
+    window.addEventListener('keydown', onEscape)
+    window.addEventListener('resize', onResize)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onEscape)
+      window.removeEventListener('resize', onResize)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileMenuOpen])
   const [featuredIndex, setFeaturedIndex] = useState(0)
   const [spotlightPaused, setSpotlightPaused] = useState(false)
+  const [spotlightManualPaused, setSpotlightManualPaused] = useState(false)
+  const [spotlightCycle, setSpotlightCycle] = useState(0)
   const [spotlightCandidates, setSpotlightCandidates] = useState([])
   const [spotlightBroken, setSpotlightBroken] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -106,7 +149,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
   useEffect(() => { const timer = setTimeout(() => setDebouncedQuery(query.trim()), 450); return () => clearTimeout(timer) }, [query])
-  useEffect(() => { if (debouncedQuery !== '') loadGames({ searchText: debouncedQuery, ordering: sort, platform: activePlatform, genre: activeGenre }) }, [debouncedQuery, loadGames])
+  useEffect(() => { if (debouncedQuery !== '' && activeTab === 'discover' && !activeQuickExplore) loadGames({ searchText: debouncedQuery, ordering: sort, platform: activePlatform, genre: activeGenre }) }, [debouncedQuery, loadGames])
   useEffect(() => { localStorage.setItem('gamebrowzr-library', JSON.stringify(library)) }, [library])
   useEffect(() => { const onScroll = () => setShowTop(window.scrollY > 700); window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll) }, [])
 
@@ -135,7 +178,8 @@ export default function App() {
   const spotlightIds = useMemo(() => new Set(spotlightCandidates.map(game => game.id)), [spotlightCandidates])
   const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
   useEffect(() => { setFeaturedIndex(0) }, [spotlightGames.length])
-  useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover' || activeQuickExplore) return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab, activeQuickExplore])
+  useEffect(() => { if (spotlightPaused || spotlightManualPaused || spotlightGames.length < 2 || activeTab !== 'discover' || activeQuickExplore) return; const timer = setTimeout(() => { setFeaturedIndex(i => (i + 1) % spotlightGames.length); setSpotlightCycle(i => i + 1) }, 8000); return () => clearTimeout(timer) }, [spotlightPaused, spotlightManualPaused, spotlightGames.length, activeTab, activeQuickExplore, featuredIndex, spotlightCycle])
+  const moveSpotlight = step => { setFeaturedIndex(i => (i + step + spotlightGames.length) % spotlightGames.length); setSpotlightCycle(i => i + 1) }
   const genres = catalogGenres
   const libraryEntries = Object.values(library)
   const libraryStats = useMemo(() => {
@@ -217,7 +261,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <aside className={`studio-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+      <button type="button" className={`mobile-drawer-backdrop ${mobileMenuOpen ? 'is-visible' : ''}`} aria-label="Close navigation" aria-hidden={!mobileMenuOpen} tabIndex={mobileMenuOpen ? 0 : -1} onClick={closeMobileMenu}/>
+      <aside id="mobile-navigation" onTouchStart={onDrawerTouchStart} onTouchMove={onDrawerTouchMove} onTouchEnd={onDrawerTouchEnd} style={mobileMenuOpen && drawerDrag ? { '--drawer-drag': `${drawerDrag}px` } : undefined} className={`studio-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <button type="button" className="mobile-drawer-close" onClick={closeMobileMenu} aria-label="Close menu"><X size={20}/></button>
         <a className="studio-brand" href="#" onClick={e => {e.preventDefault(); chooseTab('discover')}}><img src="/gamebrowzr-mark.webp" alt="GameBrowzr emblem"/><span>GAME<span>BROWZR</span><small>EXPLORE BEYOND</small></span></a>
         <div className="sidebar-label">EXPLORE</div>
         <nav className="studio-nav" aria-label="Main navigation">
@@ -245,18 +291,18 @@ export default function App() {
       </aside>
       <div className="studio-workspace" data-current-page={activeQuickExplore || activeTab}>
       <header className="studio-topbar">
-        <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
+        <button className="mobile-menu-button" onClick={() => mobileMenuOpen ? closeMobileMenu() : openMobileMenu()} aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
         <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
         <div className="studio-top-actions"><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
       <main>
         {activeTab === 'discover' && !activeQuickExplore && <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>}
         {activeTab === 'discover' && !activeQuickExplore && <section className="spotlight-area" aria-label="Featured games" onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={() => setSpotlightPaused(false)}>
-          <div className="spotlight-main">
-            {featured?.spotlight_image && <img key={featured.id} className="spotlight-background cinematic-image" src={featured.spotlight_image} alt="" loading="eager" decoding="async" onError={() => setSpotlightBroken(current => current.includes(featured.id) ? current : [...current, featured.id])} />}
+          <div className="spotlight-main" tabIndex={0} aria-label="Featured games. Use left and right arrow keys to navigate." onKeyDown={event => { if(event.key === 'ArrowLeft'){event.preventDefault();moveSpotlight(-1)} if(event.key === 'ArrowRight'){event.preventDefault();moveSpotlight(1)} }}>
+            <div className="spotlight-image-stack" aria-hidden="true">{spotlightGames.map((game, index) => <img key={game.id} className={`spotlight-background spotlight-layer ${index === featuredIndex ? 'is-active' : ''}`} src={game.spotlight_image} alt="" loading={index < 2 ? 'eager' : 'lazy'} decoding="async" onError={() => setSpotlightBroken(current => current.includes(game.id) ? current : [...current, game.id])} />)}</div>
             <div className="spotlight-overlay" aria-hidden="true" />
             <div key={featured?.id || "empty"} className="spotlight-content cinematic-copy"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
-            <div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>setFeaturedIndex(i)} aria-label={`Show featured game ${i+1}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div>
+            <div className="spotlight-navigation" aria-label="Spotlight navigation"><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(-1)} aria-label="Previous featured game"><ChevronLeft size={19}/></button><div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>{setFeaturedIndex(i);setSpotlightCycle(c=>c+1)}} aria-label={`Show ${game.name}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(1)} aria-label="Next featured game"><ChevronRight size={19}/></button><button className="spotlight-nav-button spotlight-pause" type="button" onClick={() => setSpotlightManualPaused(p => !p)} aria-label={spotlightManualPaused ? 'Resume slideshow' : 'Pause slideshow'}>{spotlightManualPaused ? <Play size={17}/> : <Pause size={17}/>}</button></div>
           </div>
           
         </section>}
@@ -276,30 +322,17 @@ export default function App() {
           </div>}
 
           <div className="filter-bar">
-            {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setActiveQuickExplore(null);setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setActiveQuickExplore(null);setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}</section>}
+            {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setActiveQuickExplore(null);setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');setDebouncedQuery('');setShowSuggestions(false);if(activeTab === 'discover') loadGames({ searchText:'', ordering:sort, platform:activePlatform, genre:activeGenre })}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}</section>}
             <div className="filter-controls">
             <div className="filter-label"><SlidersHorizontal size={16} /> FILTER BY</div>
-            <div className="filter-select-wrap">
-              <Monitor size={15} />
-              <select value={activePlatform} onChange={event => { setActivePlatform(event.target.value); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: event.target.value, genre: activeGenre }) }} aria-label="Filter by platform">
-                {platformFilters.map(platform => <option key={platform}>{platform}</option>)}
-              </select><ChevronDown size={14} />
-            </div>
-            <div className="filter-select-wrap">
-              <select value={activeGenre} onChange={event => { setActiveGenre(event.target.value); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: activePlatform, genre: event.target.value }) }} aria-label="Filter by genre">
-                {genres.map(genre => <option key={genre}>{genre}</option>)}
-              </select><ChevronDown size={14} />
-            </div>
-            <div className="filter-select-wrap sort-select">
-              <select value={sort} onChange={event => { setSort(event.target.value); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: event.target.value, platform: activePlatform, genre: activeGenre }) }} aria-label="Sort games">
-                {sortOptions.map(option => <option value={option.value} key={option.value}>Sort: {option.label}</option>)}
-              </select><ChevronDown size={14} />
-            </div>
+            <AuroraSelect className="platform-menu" label="Filter by platform" icon={Monitor} value={activePlatform} options={platformFilters} onChange={value => { setActivePlatform(value); if (activeTab === 'discover') loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: value, genre: activeGenre }) }} />
+            <AuroraSelect className="genre-menu" label="Filter by genre" value={activeGenre} options={genres} onChange={value => { setActiveGenre(value); if (activeTab === 'discover') loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: activePlatform, genre: value }) }} />
+            <AuroraSelect className="sort-menu" label="Sort games" value={sort} options={sortOptions.map(option => ({...option, label:`Sort: ${option.label}`}))} onChange={value => { setSort(value); if (activeTab === 'discover') loadGames({ searchText: activeQuickExplore ? '' : query, ordering: value, platform: activePlatform, genre: activeGenre }) }} />
             {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre(activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres'); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: 'All platforms', genre: activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres' }) }}>Reset filters</button>}
             </div>
           </div>
 
-          {activeTab === 'library' && <div className="library-filter"><label htmlFor="library-status">Library status</label><select id="library-status" value={libraryFilter} onChange={event => setLibraryFilter(event.target.value)}><option value="all">All games</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>}
+          {activeTab === 'library' && <div className="library-filter"><span>Library status</span><AuroraSelect label="Library status" value={libraryFilter} onChange={setLibraryFilter} options={[{value:'all',label:'All games'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>}
           {activeTab === 'library' && <div className="library-summary">{[['playing','Playing',PlayCircle],['completed','Completed',Trophy]].map(([status,label,Icon]) => <div className="summary-tile" key={status}><Icon size={20}/><strong>{Object.values(library).filter(item => item.status === status).length}</strong><span>{label}</span></div>)}</div>}
           {usingDemo && <div className="demo-notice"><span className="notice-dot" /><div><strong>Preview data is active.</strong> Configure your Twitch application credentials in Vercel to load the live game catalog. <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noreferrer">Create API credentials ↗</a></div></div>}
           {error && <div className="error-notice">{error}</div>}
