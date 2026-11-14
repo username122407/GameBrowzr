@@ -21,13 +21,18 @@ export default function App() {
   const [activeGenre, setActiveGenre] = useState('All genres')
   const [sort, setSort] = useState('-rating')
   const [activeTab, setActiveTab] = useState('discover')
+  const [activeQuickExplore, setActiveQuickExplore] = useState(null)
   const [wishlist, setWishlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gamebrowzr-wishlist') || '[]') } catch { return [] }
   })
   const [selectedGame, setSelectedGame] = useState(null)
   const [compare, setCompare] = useState([])
   const [library, setLibrary] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('gamebrowzr-library') || '{}') } catch { return {} }
+    try {
+      const stored = JSON.parse(localStorage.getItem('gamebrowzr-library') || '{}')
+      // Older 'want to play' records are now handled by the separate wishlist.
+      return Object.fromEntries(Object.entries(stored).filter(([, entry]) => ['playing', 'completed'].includes(entry?.status)))
+    } catch { return {} }
   })
   const [showTop, setShowTop] = useState(false)
   const [libraryFilter, setLibraryFilter] = useState('all')
@@ -117,10 +122,10 @@ export default function App() {
   }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore, visibleCount, games.length])
   useEffect(() => { localStorage.setItem('gamebrowzr-wishlist', JSON.stringify(wishlist)) }, [wishlist])
 
-  const spotlightGames = useMemo(() => games.filter(game => game.background_image).slice(0, 5), [games])
+  const spotlightGames = useMemo(() => games.filter(game => game.spotlight_image).slice(0, 5), [games])
   const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
   useEffect(() => { setFeaturedIndex(0) }, [games])
-  useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover') return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab])
+  useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover' || activeQuickExplore) return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab, activeQuickExplore])
   const genres = catalogGenres
   const libraryEntries = Object.values(library)
   const libraryStats = useMemo(() => {
@@ -173,15 +178,31 @@ export default function App() {
   const isSaved = game => wishlist.some(item => item.id === game.id)
   const submitSearch = event => {
     event.preventDefault()
+    setActiveQuickExplore(null)
     setActiveTab('discover')
     refreshGames(query, sort)
   }
   const chooseTab = tab => {
+    setActiveQuickExplore(null)
     setActiveTab(tab)
     setMobileMenuOpen(false)
     setActivePlatform('All platforms')
     setActiveGenre('All genres')
     if (tab === 'discover' && !games.length) refreshGames('', sort)
+  }
+
+  const chooseQuickExplore = ({ label, ordering, genre }) => {
+    const nextSort = ordering || '-rating'
+    const nextGenre = genre || 'All genres'
+    setActiveQuickExplore(label)
+    setActiveTab('discover')
+    setMobileMenuOpen(false)
+    setQuery('')
+    setDebouncedQuery('')
+    setActivePlatform('All platforms')
+    setActiveGenre(nextGenre)
+    setSort(nextSort)
+    loadGames({ searchText: '', ordering: nextSort, platform: 'All platforms', genre: nextGenre })
   }
 
   return (
@@ -190,46 +211,56 @@ export default function App() {
         <a className="studio-brand" href="#" onClick={e => {e.preventDefault(); chooseTab('discover')}}><img src="/gamebrowzr-mark.webp" alt="GameBrowzr emblem"/><span>GAME<span>BROWZR</span><small>EXPLORE BEYOND</small></span></a>
         <div className="sidebar-label">EXPLORE</div>
         <nav className="studio-nav" aria-label="Main navigation">
-          <button className={activeTab === 'discover' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('discover')}><Compass size={18}/> Discover <ArrowRight size={14} className="link-arrow"/></button>
+          <button className={activeTab === 'discover' && !activeQuickExplore ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('discover')}><Compass size={18}/> Discover</button>
           <button className={activeTab === 'wishlist' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('wishlist')}><Heart size={18}/> Wishlist <span className="side-count">{wishlist.length}</span></button>
           <button className={activeTab === 'library' ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('library')}><Library size={18}/> My library <span className="side-count">{Object.keys(library).length}</span></button>
         </nav>
         <div className="sidebar-label sidebar-label-secondary">QUICK EXPLORE</div>
-        <nav className="studio-nav" aria-label="Discovery shortcuts">
-          <button className="studio-link" onClick={() => {setQuery(''); setSort('-rating'); refreshGames('', '-rating')}}><Trophy size={18}/> Top rated</button>
-          <button className="studio-link" onClick={() => {setQuery(''); setSort('-released'); refreshGames('', '-released')}}><Flame size={18}/> New releases</button>
-          <button className="studio-link" onClick={() => {setQuery(''); setActiveGenre('Indie'); refreshGames('', sort, activePlatform, 'Indie')}}><Sparkles size={18}/> Indie gems</button>
+        <nav className="studio-nav quick-explore-nav" aria-label="Discovery shortcuts">
+          {[
+            { label: 'Top rated', icon: Trophy, ordering: '-rating' },
+            { label: 'New releases', icon: Flame, ordering: '-released' },
+            { label: 'Indie gems', icon: Sparkles, genre: 'Indie' },
+            { label: 'Action', icon: Gamepad2, genre: 'Action' },
+            { label: 'RPG adventures', icon: Compass, genre: 'Role-playing (RPG)' },
+            { label: 'Shooters', icon: TrendingUp, genre: 'Shooter' },
+            { label: 'Strategy', icon: SlidersHorizontal, genre: 'Strategy' },
+            { label: 'Racing', icon: Flame, genre: 'Racing' },
+            { label: 'Puzzle', icon: WandSparkles, genre: 'Puzzle' },
+            { label: 'Platformers', icon: PlayCircle, genre: 'Platform' },
+          ].map(({label, icon: Icon, ordering, genre}) => (
+            <button key={label} type="button" aria-current={activeTab === 'discover' && activeQuickExplore === label ? 'page' : undefined} className={activeTab === 'discover' && activeQuickExplore === label ? 'studio-link active' : 'studio-link'} onClick={() => chooseQuickExplore({ label, ordering, genre })}><Icon size={18}/> {label}</button>
+          ))}
         </nav>
-        <div className="sidebar-bottom"><div className="sidebar-gradient-icon"><Gamepad2 size={21}/></div><strong>Make your next<br/>play unforgettable.</strong><span>Find games worth exploring.</span></div>
       </aside>
       <div className="studio-workspace">
       <header className="studio-topbar">
         <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
-        <div className="studio-location"><span>DISCOVER</span><span className="location-separator">/</span><strong>{activeTab === 'discover' ? 'Game store' : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
-        <div className="studio-top-actions"><button className="shortcut-toggle" onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts"><Keyboard size={16}/> <span>Shortcuts</span></button><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span><button className="top-avatar" onClick={() => chooseTab('library')} aria-label="Open my library"><Library size={18}/></button></div>
+        <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
+        <div className="studio-top-actions"><button className="shortcut-toggle" onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts"><Keyboard size={16}/> <span>Shortcuts</span></button><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
       <main>
         <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>
-        {activeTab === 'discover' && <section className="spotlight-area" aria-label="Featured games" onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={() => setSpotlightPaused(false)}>
-          <div className="spotlight-main" style={featured?.background_image ? {backgroundImage:`linear-gradient(90deg,rgba(10,9,23,.83) 0%,rgba(10,9,23,.22) 100%),url(${featured.background_image})`} : undefined}>
+        {activeTab === 'discover' && !activeQuickExplore && <section className="spotlight-area" aria-label="Featured games" onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={() => setSpotlightPaused(false)}>
+          <div className="spotlight-main" style={featured?.spotlight_image ? {backgroundImage:`linear-gradient(90deg,rgba(10,9,23,.83) 0%,rgba(10,9,23,.22) 100%),url("${featured.spotlight_image}")`} : undefined}>
             <div className="spotlight-content"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
             <div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>setFeaturedIndex(i)} aria-label={`Show featured game ${i+1}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div>
           </div>
           <div className="spotlight-side"><div className="side-feature"><span>YOUR LIBRARY</span><strong>Every adventure,<br/>in one place.</strong><p>Save it. Play it. Remember it.</p><button onClick={() => chooseTab('library')}>View library <ArrowRight size={15}/></button><div className="side-feature-glow"/></div><div className="side-mini"><span className="mini-icon"><Heart size={20}/></span><div><strong>{wishlist.length} saved games</strong><small>Your next adventures await</small></div><ArrowRight size={16}/></div></div>
         </section>}
-        {activeTab === 'discover' && <section className="curated-section" aria-label="Personalized discoveries">
+        {activeTab === 'discover' && !activeQuickExplore && <section className="curated-section" aria-label="Personalized discoveries">
           <div className="curated-head"><div><span className="eyebrow"><WandSparkles size={14}/> SMART DISCOVERY</span><h2>Picked for your taste <span className="heading-dot">.</span></h2><p>Recommendations based on your saved games and favorite genres, refreshed as you explore.</p></div><button className="surprise-button" onClick={() => { const pick = recommendations[Math.floor(Math.random()*recommendations.length)] || games[Math.floor(Math.random()*games.length)]; if (pick) setSelectedGame(pick) }}><Dices size={17}/> Surprise me</button></div>
           <div className="curated-scroll">{recommendations.slice(0,6).map(game => <button className="curated-card" key={game.id} onClick={() => setSelectedGame(game)}><img src={game.background_image} alt="" loading="lazy"/><span>{game.name}</span><small>{game.genres?.slice(0,2).map(g=>g.name).join(' · ') || 'Discover'}</small></button>)}</div>
           {!wishlist.length && !libraryEntries.length && <p className="recommendation-note">Save games to your wishlist or library to personalize these recommendations.</p>}
         </section>}
         {activeTab === 'library' && <section className="insights-panel"><div className="insights-title"><BarChart3 size={21}/><div><h2>Your gaming snapshot</h2><p>Insights from the games you've saved on this device.</p></div></div><div className="insight-grid"><div><span>Total tracked</span><strong>{libraryEntries.length}</strong></div><div><span>Completed</span><strong>{libraryEntries.filter(e=>e.status==='completed').length}</strong></div><div><span>Completion rate</span><strong>{libraryEntries.length ? Math.round(libraryEntries.filter(e=>e.status==='completed').length / libraryEntries.length * 100) : 0}%</strong></div><div><span>Favorite genre</span><strong className="insight-genre">{libraryStats.topGenre || 'Explore games'}</strong></div></div><div className="insights-bars">{Object.entries(libraryStats.genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,count])=><div className="insights-bar" key={name}><span>{name}</span><div><i style={{width:`${Math.max(8,count/Math.max(1,libraryEntries.length)*100)}%`}}/></div><b>{count}</b></div>)}</div></section>}
-        <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}<div className="studio-search-note"><span>EXPLORE PLATFORMS</span>{['PC','PlayStation','Xbox','Nintendo','Mobile'].map(tag=><button key={tag} onClick={()=>{setActivePlatform(tag);refreshGames(query,sort,tag,activeGenre)}}>{tag}</button>)}</div></section>
+        {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setActiveQuickExplore(null);setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setActiveQuickExplore(null);setQuery('');refreshGames('',sort)}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}<div className="studio-search-note"><span>EXPLORE PLATFORMS</span>{['PC','PlayStation','Xbox','Nintendo','Mobile'].map(tag=><button key={tag} onClick={()=>{setActiveQuickExplore(null);setActivePlatform(tag);refreshGames(query,sort,tag,activeGenre)}}>{tag}</button>)}</div></section>}
         <section className="catalog-section">
           <div className="section-topline">
             <div>
               <div className="eyebrow">{activeTab === 'wishlist' || activeTab === 'library' ? 'YOUR COLLECTION' : 'THE GAME LIBRARY'}</div>
               <h2>{activeTab === 'wishlist' ? 'Your wishlist' : activeTab === 'library' ? 'My game library' : 'Explore games'} <span className="heading-dot">.</span></h2>
-              <p className="section-subtitle">{activeTab === 'wishlist' ? 'Your saved games, all in one place.' : activeTab === 'library' ? 'Track what you want to play, are playing, and have completed.' : 'Main games only. Browse, filter and discover something worth playing.'}</p>
+              <p className="section-subtitle">{activeTab === 'wishlist' ? 'Your saved games, all in one place.' : activeTab === 'library' ? 'Track games you are playing and have completed.' : 'Main games only. Browse, filter and discover something worth playing.'}</p>
             </div>
             <div className="result-count"><span>{visibleGames.length}</span> games shown</div>
           </div>
@@ -238,26 +269,26 @@ export default function App() {
             <div className="filter-label"><SlidersHorizontal size={16} /> FILTER BY</div>
             <div className="filter-select-wrap">
               <Monitor size={15} />
-              <select value={activePlatform} onChange={event => { setActivePlatform(event.target.value); refreshGames(query, sort, event.target.value, activeGenre) }} aria-label="Filter by platform">
+              <select value={activePlatform} onChange={event => { setActiveQuickExplore(null); setActivePlatform(event.target.value); refreshGames(query, sort, event.target.value, activeGenre) }} aria-label="Filter by platform">
                 {platformFilters.map(platform => <option key={platform}>{platform}</option>)}
               </select><ChevronDown size={14} />
             </div>
             <div className="filter-select-wrap">
-              <select value={activeGenre} onChange={event => { setActiveGenre(event.target.value); refreshGames(query, sort, activePlatform, event.target.value) }} aria-label="Filter by genre">
+              <select value={activeGenre} onChange={event => { setActiveQuickExplore(null); setActiveGenre(event.target.value); refreshGames(query, sort, activePlatform, event.target.value) }} aria-label="Filter by genre">
                 {genres.map(genre => <option key={genre}>{genre}</option>)}
               </select><ChevronDown size={14} />
             </div>
             <div className="filter-select-wrap sort-select">
-              <select value={sort} onChange={event => { setSort(event.target.value); refreshGames(query, event.target.value) }} aria-label="Sort games">
+              <select value={sort} onChange={event => { setActiveQuickExplore(null); setSort(event.target.value); refreshGames(query, event.target.value) }} aria-label="Sort games">
                 {sortOptions.map(option => <option value={option.value} key={option.value}>Sort: {option.label}</option>)}
               </select><ChevronDown size={14} />
             </div>
-            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres'); refreshGames(query, sort, 'All platforms', 'All genres') }}>Reset filters</button>}
+            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActiveQuickExplore(null); setActivePlatform('All platforms'); setActiveGenre('All genres'); refreshGames(query, sort, 'All platforms', 'All genres') }}>Reset filters</button>}
           </div>
 
-          {activeTab === 'discover' && <div className="discovery-shortcuts"><span>QUICK DISCOVERY</span><button onClick={() => { setQuery(''); setSort('-rating'); refreshGames('', '-rating') }}>★ Top rated</button><button onClick={() => { setQuery(''); setSort('-released'); refreshGames('', '-released') }}>◷ New releases</button><button onClick={() => { setQuery(''); setActiveGenre('Indie'); refreshGames('', sort, activePlatform, 'Indie') }}>✦ Indie gems</button><button onClick={() => { setQuery(''); setActiveGenre('Shooter'); refreshGames('', sort, activePlatform, 'Shooter') }}>◎ Shooters</button></div>}
-          {activeTab === 'library' && <div className="library-filter"><label htmlFor="library-status">Library status</label><select id="library-status" value={libraryFilter} onChange={event => setLibraryFilter(event.target.value)}><option value="all">All games</option><option value="want">Want to play</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>}
-          {activeTab === 'library' && <div className="library-summary">{[['want','Want to play',Clock3],['playing','Playing',PlayCircle],['completed','Completed',Trophy]].map(([status,label,Icon]) => <div className="summary-tile" key={status}><Icon size={20}/><strong>{Object.values(library).filter(item => item.status === status).length}</strong><span>{label}</span></div>)}</div>}
+          {activeTab === 'discover' && <div className="discovery-shortcuts"><span>QUICK DISCOVERY</span><button onClick={() => chooseQuickExplore({ label: 'Top rated', ordering: '-rating' })}>★ Top rated</button><button onClick={() => chooseQuickExplore({ label: 'New releases', ordering: '-released' })}>◷ New releases</button><button onClick={() => chooseQuickExplore({ label: 'Indie gems', genre: 'Indie' })}>✦ Indie gems</button><button onClick={() => chooseQuickExplore({ label: 'Shooters', genre: 'Shooter' })}>◎ Shooters</button></div>}
+          {activeTab === 'library' && <div className="library-filter"><label htmlFor="library-status">Library status</label><select id="library-status" value={libraryFilter} onChange={event => setLibraryFilter(event.target.value)}><option value="all">All games</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>}
+          {activeTab === 'library' && <div className="library-summary">{[['playing','Playing',PlayCircle],['completed','Completed',Trophy]].map(([status,label,Icon]) => <div className="summary-tile" key={status}><Icon size={20}/><strong>{Object.values(library).filter(item => item.status === status).length}</strong><span>{label}</span></div>)}</div>}
           {usingDemo && <div className="demo-notice"><span className="notice-dot" /><div><strong>Preview data is active.</strong> Configure your Twitch application credentials in Vercel to load the live game catalog. <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noreferrer">Create API credentials ↗</a></div></div>}
           {error && <div className="error-notice">{error}</div>}
 
@@ -266,7 +297,7 @@ export default function App() {
               {visibleGames.slice(0,visibleCount).map(game => <GameCard key={game.id} game={game} saved={isSaved(game)} onToggleSave={toggleWishlist} onOpen={setSelectedGame} onCompare={toggleCompare} comparing={compare.some(item => item.id === game.id)} libraryStatus={library[game.id]?.status || ""} onLibraryStatus={setLibraryStatus} />)}
             </div>
           ) : (
-            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : activeTab === 'library' ? 'Your library is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : activeTab === 'library' ? 'Mark games as Want to play, Playing, or Completed.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button></div>
+            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : activeTab === 'library' ? 'Your library is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : activeTab === 'library' ? 'Mark games as Want to play, Playing, or Completed.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActiveQuickExplore(null); setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button></div>
           )}
           {activeTab === 'discover' && !usingDemo && (hasMore || visibleCount < games.length) && !loading && <div className="render-more" ref={loadMoreRef} aria-live="polite"><p>{loadingMore ? 'Loading more discoveries…' : `Showing ${Math.min(visibleCount, games.length)} of ${games.length} loaded games · Scroll for more`}</p></div>}
         </section>

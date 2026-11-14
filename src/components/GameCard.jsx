@@ -31,7 +31,7 @@ export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare,
           <span className="rating"><Star size={14} fill="currentColor" /> {game.rating ? Number(game.rating).toFixed(1) : "N/A"}</span>
           <span className="platform-count">{platforms.length || '—'} platforms</span>
         </div>
-        <div className="card-actions"><select aria-label={`Track ${game.name}`} value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Track game</option><option value="want">Want to play</option><option value="playing">Playing</option><option value="completed">Completed</option></select><button className={comparing ? 'compare-selected' : ''} onClick={() => onCompare(game)} title="Compare game" aria-label={`Compare ${game.name}`}><GitCompareArrows size={15}/></button></div>
+        <div className="card-actions"><select aria-label={`Track ${game.name}`} value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Track game</option><option value="playing">Playing</option><option value="completed">Completed</option></select><button className={comparing ? 'compare-selected' : ''} onClick={() => onCompare(game)} title="Compare game" aria-label={`Compare ${game.name}`}><GitCompareArrows size={15}/></button></div>
       </div>
     </article>
   )

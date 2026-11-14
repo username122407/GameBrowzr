@@ -42,3 +42,14 @@ body{background:#0b0d17}.app-shell{display:block;overflow:visible;min-height:100
 .store-fallback { margin-top: 16px; padding: 12px; border: 1px solid rgba(183,161,222,.17); border-radius: 12px; }
 .store-fallback summary { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cfc3e5; font-size: .9rem; }
 .store-fallback[open] summary { margin-bottom: 10px; }
+
+/* 4.2 navigation cleanup: compact expanded shortcuts, no redundant promo or top library action */
+.quick-explore-nav{padding-bottom:24px}
+.quick-explore-nav .studio-link{height:39px;font-size:12px}
+.quick-explore-nav .studio-link svg{flex-shrink:0}
+
+/* GameBrowzr 4.3: one unified grid for direct and search storefront links */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
+.store-grid .store-link{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.store-link-kind{display:block;font-size:10px;font-weight:500;opacity:.7;margin-top:3px}
+.spotlight-main{background-position:center;background-size:cover;background-repeat:no-repeat}
