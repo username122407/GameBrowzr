@@ -53,3 +53,24 @@ body{background:#0b0d17}.app-shell{display:block;overflow:visible;min-height:100
 .store-grid .store-link{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .store-link-kind{display:block;font-size:10px;font-weight:500;opacity:.7;margin-top:3px}
 .spotlight-main{background-position:center;background-size:cover;background-repeat:no-repeat}
+
+/* 4.3.4: Spotlight takes full width after removing the redundant library promotion. */
+.spotlight-area { grid-template-columns: minmax(0, 1fr); }
+.spotlight-main { min-width: 0; }
+
+/* GameBrowzr 4.3.5 — centered comparison and unified search/filter toolbar */
+.compare-dialog{position:fixed;inset:0;margin:auto;width:min(960px,calc(100vw - 36px));max-width:960px;max-height:min(85vh,820px);box-sizing:border-box;padding:25px;border-radius:20px;box-shadow:0 32px 110px #000c,0 0 0 1px #ab86ec22;overscroll-behavior:contain}
+.compare-dialog[open]{animation:compare-dialog-enter .2s ease-out}
+@keyframes compare-dialog-enter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+.compare-header{margin-bottom:18px}.compare-header h2{font-size:1.25rem;margin:0}.compare-header button{cursor:pointer;padding:6px;border-radius:9px}.compare-header button:hover{background:#ffffff16}
+.compare-grid{grid-template-columns:repeat(auto-fit,minmax(min(195px,100%),1fr));gap:14px}
+.compare-column{min-width:0}.compare-column img{height:170px}
+.catalog-section>.filter-bar{display:flex;flex-direction:column;align-items:stretch;gap:13px;padding:16px 18px;border:1px solid #77619c45;background:linear-gradient(120deg,#1d1d30,#181827);box-shadow:0 12px 35px #0002}
+.filter-bar .studio-search{padding:0;width:100%;position:relative}
+.filter-bar .studio-search .search-form{height:52px;box-shadow:none;background:#111422;border:1px solid #55476d7d}
+.filter-bar .search-suggestions{position:absolute;top:100%;left:0;right:0;margin-top:6px;z-index:20}
+.filter-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+.filter-controls .sort-select{margin-left:auto}
+.filter-controls .filter-label{white-space:nowrap}
+@media(max-width:700px){.catalog-section>.filter-bar{padding:12px}.filter-controls .filter-label{width:100%}.filter-controls .filter-select-wrap{flex:1;min-width:130px}.filter-controls .sort-select{margin-left:0}.compare-dialog{width:calc(100vw - 24px);padding:16px}.compare-column img{height:135px}}
+@media(prefers-reduced-motion:reduce){.compare-dialog[open]{animation:none}}
