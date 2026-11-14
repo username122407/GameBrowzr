@@ -5,7 +5,7 @@ export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare,
   const image = game.background_image
 
   return (
-    <article className="game-card">
+    <article className="game-card cinematic-card">
       <button className="cover-button" onClick={() => onOpen(game)} aria-label={`View ${game.name} details`}>
         {image
           ? <img className="game-cover" src={image} alt={`${game.name} artwork`} loading="lazy" />

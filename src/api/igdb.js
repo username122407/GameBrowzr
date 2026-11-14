@@ -17,3 +17,7 @@ export async function getGames({ search = '', ordering = '-rating', offset = 0, 
 export function getGameDetails(id) {
   return request(`/api/games/${encodeURIComponent(id)}`)
 }
+
+export function getSpotlightGames() {
+  return request(`/api/spotlight`)
+}

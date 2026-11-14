@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard } from 'lucide-react'
-import { getGames, apiProxyEnabled } from './api/igdb'
+import { getGames, getSpotlightGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
 
 const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile', 'iOS', 'Android']
-const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel', 'Free to Play']
+const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
 const PAGE_SIZE = 60
 const sortOptions = [
   { label: 'Top rated', value: '-rating' },
@@ -50,6 +50,8 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [featuredIndex, setFeaturedIndex] = useState(0)
   const [spotlightPaused, setSpotlightPaused] = useState(false)
+  const [spotlightCandidates, setSpotlightCandidates] = useState([])
+  const [spotlightBroken, setSpotlightBroken] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [visibleCount, setVisibleCount] = useState(48)
 
@@ -87,6 +89,14 @@ export default function App() {
   }, [])
 
   useEffect(() => { loadGames() }, [loadGames])
+  // Spotlight has its own editorial feed; catalog searches and filters never change it.
+  useEffect(() => {
+    let cancelled = false
+    getSpotlightGames().then(data => {
+      if (!cancelled) setSpotlightCandidates(data.results || [])
+    }).catch(() => { if (!cancelled) setSpotlightCandidates([]) })
+    return () => { cancelled = true }
+  }, [])
   useEffect(() => {
     const handler = event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); document.querySelector('.search-form input')?.focus() }
@@ -120,9 +130,11 @@ export default function App() {
   }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore, visibleCount, games.length])
   useEffect(() => { localStorage.setItem('gamebrowzr-wishlist', JSON.stringify(wishlist)) }, [wishlist])
 
-  const spotlightGames = useMemo(() => games.filter(game => game.spotlight_image).slice(0, 5), [games])
+  // Never show a spotlight title in Smart Discovery, and skip failed images.
+  const spotlightGames = useMemo(() => spotlightCandidates.filter(game => game.spotlight_image && !spotlightBroken.includes(game.id)).slice(0, 5), [spotlightCandidates, spotlightBroken])
+  const spotlightIds = useMemo(() => new Set(spotlightCandidates.map(game => game.id)), [spotlightCandidates])
   const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
-  useEffect(() => { setFeaturedIndex(0) }, [games])
+  useEffect(() => { setFeaturedIndex(0) }, [spotlightGames.length])
   useEffect(() => { if (spotlightPaused || spotlightGames.length < 2 || activeTab !== 'discover' || activeQuickExplore) return; const timer = setInterval(() => setFeaturedIndex(i => (i + 1) % spotlightGames.length), 6500); return () => clearInterval(timer) }, [spotlightPaused, spotlightGames.length, activeTab, activeQuickExplore])
   const genres = catalogGenres
   const libraryEntries = Object.values(library)
@@ -141,10 +153,10 @@ export default function App() {
     const interests = {}
     saved.forEach(game => (game.genres || []).forEach(g => { interests[g.name] = (interests[g.name] || 0) + 1 }))
     const existing = new Set(saved.map(g => g.id))
-    return games.filter(game => !existing.has(game.id) && game.background_image)
+    return games.filter(game => !existing.has(game.id) && !spotlightIds.has(game.id) && game.background_image)
       .map(game => ({ game, score: (game.genres || []).reduce((n,g) => n + (interests[g.name] || 0),0) * 10 + (game.rating || 0) }))
       .sort((a,b) => b.score - a.score).slice(0, 8).map(item => item.game)
-  }, [games, wishlist, library])
+  }, [games, wishlist, library, spotlightIds])
   const suggestions = useMemo(() => {
     const text = query.trim().toLowerCase()
     return text.length > 1 ? games.filter(game => game.name.toLowerCase().includes(text)).slice(0,5) : []
@@ -219,7 +231,6 @@ export default function App() {
             { label: 'Top rated', icon: Trophy, ordering: '-rating' },
             { label: 'New releases', icon: Flame, ordering: '-released' },
             { label: 'Indie gems', icon: Sparkles, genre: 'Indie' },
-            { label: 'Free to Play', icon: Gamepad2, genre: 'Free to Play' },
             { label: 'Action', icon: Gamepad2, genre: 'Action' },
             { label: 'RPG adventures', icon: Compass, genre: 'Role-playing (RPG)' },
             { label: 'Shooters', icon: TrendingUp, genre: 'Shooter' },
@@ -232,17 +243,19 @@ export default function App() {
           ))}
         </nav>
       </aside>
-      <div className="studio-workspace">
+      <div className="studio-workspace" data-current-page={activeQuickExplore || activeTab}>
       <header className="studio-topbar">
         <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(open => !open)} aria-label="Toggle navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
         <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
         <div className="studio-top-actions"><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
       <main>
-        {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>}
+        {activeTab === 'discover' && !activeQuickExplore && <section className="studio-intro"><div><div className="hero-kicker"><Sparkles size={14}/> CURATED FOR THE CURIOUS</div><h1>Discover your <em>next obsession.</em></h1><p>From timeless classics to your next favorite. One beautiful place to explore gaming.</p></div><div className="intro-glow" aria-hidden="true"/></section>}
         {activeTab === 'discover' && !activeQuickExplore && <section className="spotlight-area" aria-label="Featured games" onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={() => setSpotlightPaused(false)}>
-          <div className="spotlight-main" style={featured?.spotlight_image ? {backgroundImage:`linear-gradient(90deg,rgba(10,9,23,.83) 0%,rgba(10,9,23,.22) 100%),url("${featured.spotlight_image}")`} : undefined}>
-            <div className="spotlight-content"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
+          <div className="spotlight-main">
+            {featured?.spotlight_image && <img key={featured.id} className="spotlight-background cinematic-image" src={featured.spotlight_image} alt="" loading="eager" decoding="async" onError={() => setSpotlightBroken(current => current.includes(featured.id) ? current : [...current, featured.id])} />}
+            <div className="spotlight-overlay" aria-hidden="true" />
+            <div key={featured?.id || "empty"} className="spotlight-content cinematic-copy"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
             <div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>setFeaturedIndex(i)} aria-label={`Show featured game ${i+1}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div>
           </div>
           
@@ -282,7 +295,7 @@ export default function App() {
                 {sortOptions.map(option => <option value={option.value} key={option.value}>Sort: {option.label}</option>)}
               </select><ChevronDown size={14} />
             </div>
-            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre(activeQuickExplore === 'Free to Play' ? 'Free to Play' : activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres'); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: 'All platforms', genre: activeQuickExplore === 'Free to Play' ? 'Free to Play' : activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres' }) }}>Reset filters</button>}
+            {(activePlatform !== 'All platforms' || activeGenre !== 'All genres') && <button className="reset-filters" onClick={() => { setActivePlatform('All platforms'); setActiveGenre(activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres'); loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: 'All platforms', genre: activeQuickExplore === 'Indie gems' ? 'Indie' : activeQuickExplore === 'Action' ? 'Action' : activeQuickExplore === 'RPG adventures' ? 'Role-playing (RPG)' : activeQuickExplore === 'Shooters' ? 'Shooter' : activeQuickExplore === 'Strategy' ? 'Strategy' : activeQuickExplore === 'Racing' ? 'Racing' : activeQuickExplore === 'Puzzle' ? 'Puzzle' : activeQuickExplore === 'Platformers' ? 'Platform' : 'All genres' }) }}>Reset filters</button>}
             </div>
           </div>
 

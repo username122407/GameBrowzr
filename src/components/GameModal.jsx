@@ -18,6 +18,7 @@ const storeSearch = {
 export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus }) {
   const [details, setDetails] = useState(game)
   const [loading, setLoading] = useState(false)
+  const [viewer, setViewer] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -32,14 +33,14 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   }, [game.id])
 
   useEffect(() => {
-    const onKey = event => event.key === 'Escape' && onClose()
+    const onKey = event => { if (event.key === 'Escape') { if (viewer) setViewer(null); else onClose() } }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [onClose])
+  }, [onClose, viewer])
 
   const platforms = (details.parent_platforms || game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
   const directStores = Array.isArray(details.storeLinks) ? details.storeLinks : []
@@ -49,6 +50,11 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
     .flatMap(platform => (storeSearch[platform] || []).map(([label, makeUrl]) => ({ label, url: makeUrl(game.name) })))
     .filter((store, index, all) => !directLabels.has(store.label) && all.findIndex(item => item.label === store.label) === index)
   const description = (details.description_raw || '').trim()
+  const screenshots = Array.isArray(details.screenshots) ? details.screenshots : []
+  const highResScreenshot = url => typeof url === 'string' ? url.replace(/\/t_screenshot_big\//, '/t_1080p/').replace(/\/t_screenshot_med\//, '/t_1080p/') : ''
+  const openScreenshot = index => setViewer({ type: 'image', index })
+  const navigateScreenshot = delta => setViewer(current => current?.type === 'image' ? { type: 'image', index: (current.index + delta + screenshots.length) % screenshots.length } : current)
+  const youtubeId = id => /^[a-zA-Z0-9_-]{11}$/.test(String(id || '')) ? String(id) : null
 
   return (
     <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
@@ -91,8 +97,8 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
             {loading ? <p className="muted">Loading game description…</p> : <p className="description-text">{description || 'A description is not available for this game.'}</p>}
           </div>
           {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
-          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.map(video => <a href={`https://www.youtube.com/watch?v=${encodeURIComponent(video.id)}`} target="_blank" rel="noopener noreferrer" key={video.id}><img src={`https://img.youtube.com/vi/${encodeURIComponent(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></a>)}</div></div>}
-          {details.screenshots?.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{details.screenshots.map((url, i) => <a key={url} href={url} target="_blank" rel="noreferrer" aria-label={`Open screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></a>)}</div></div>}
+          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
+          {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
           <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><select className="modal-status" value={libraryStatus} onChange={event => onLibraryStatus(game, event.target.value)}><option value="">Not in my library</option><option value="playing">Playing</option><option value="completed">Completed</option></select></div>
           <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} onClick={() => onToggleSave(game)}>
             <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
@@ -100,6 +106,13 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
           <p className="data-credit">Game information and artwork provided by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>.</p>
         </div>
       </section>
+      {viewer && <div className="media-viewer-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setViewer(null) }}>
+        <section className="media-viewer" role="dialog" aria-modal="true" aria-label={viewer.type === 'video' ? `Trailer: ${viewer.name || game.name}` : `Screenshot ${viewer.index + 1} of ${screenshots.length}`}>
+          <div className="media-viewer-header"><span>{viewer.type === 'video' ? (viewer.name || `${game.name} trailer`) : `${game.name} · ${viewer.index + 1} / ${screenshots.length}`}</span><button type="button" onClick={() => setViewer(null)} aria-label="Close media viewer"><X size={22}/></button></div>
+          {viewer.type === 'video' ? <div className="media-video-frame"><iframe key={viewer.id} src={`https://www.youtube-nocookie.com/embed/${viewer.id}?autoplay=1&rel=0`} title={viewer.name || `${game.name} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /></div> : <div className="media-image-frame"><img src={highResScreenshot(screenshots[viewer.index])} alt={`${game.name} screenshot ${viewer.index + 1}`} />{screenshots.length > 1 && <><button type="button" className="media-viewer-prev" onClick={() => navigateScreenshot(-1)} aria-label="Previous screenshot">‹</button><button type="button" className="media-viewer-next" onClick={() => navigateScreenshot(1)} aria-label="Next screenshot">›</button></>}</div>}
+          {viewer.type === 'video' && <p className="media-viewer-note">Video playback depends on the uploader's embedding permissions.</p>}
+        </section>
+      </div>}
     </div>
   )
 }
