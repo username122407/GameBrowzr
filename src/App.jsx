@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard } from 'lucide-react'
+import { Gamepad2, Compass, Flame, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard, CarFront, Crosshair, BrainCircuit, Puzzle, Footprints, Shapes, Joystick, Rocket, Swords, Mountain, } from 'lucide-react'
 import { getGames, getSpotlightGames, apiProxyEnabled } from './api/igdb'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
 import AuroraSelect from './components/AuroraSelect'
+import CompareInsights from './components/CompareInsights'
 
 const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'iOS', 'Android']
 const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
@@ -289,16 +290,16 @@ export default function App() {
         <div className="sidebar-label sidebar-label-secondary">QUICK EXPLORE</div>
         <nav className="studio-nav quick-explore-nav" aria-label="Discovery shortcuts">
           {[
-            { label: 'Simulation', icon: Gamepad2, genre: 'Simulator' },
-            { label: 'New releases', icon: Flame, ordering: '-released' },
-            { label: 'Indie gems', icon: Sparkles, genre: 'Indie' },
-            { label: 'Action', icon: Gamepad2, genre: 'Action' },
-            { label: 'RPG adventures', icon: Compass, genre: 'Role-playing (RPG)' },
-            { label: 'Shooters', icon: TrendingUp, genre: 'Shooter' },
-            { label: 'Strategy', icon: SlidersHorizontal, genre: 'Strategy' },
-            { label: 'Racing', icon: Flame, genre: 'Racing' },
-            { label: 'Puzzle', icon: WandSparkles, genre: 'Puzzle' },
-            { label: 'Platformers', icon: PlayCircle, genre: 'Platform' },
+            { label: 'Simulation', icon: Joystick, genre: 'Simulator' },
+            { label: 'New releases', icon: Rocket, ordering: '-released' },
+            { label: 'Indie gems', icon: Shapes, genre: 'Indie' },
+            { label: 'Action', icon: Swords, genre: 'Action' },
+            { label: 'RPG adventures', icon: Mountain, genre: 'Role-playing (RPG)' },
+            { label: 'Shooters', icon: Crosshair, genre: 'Shooter' },
+            { label: 'Strategy', icon: BrainCircuit, genre: 'Strategy' },
+            { label: 'Racing', icon: CarFront, genre: 'Racing' },
+            { label: 'Puzzle', icon: Puzzle, genre: 'Puzzle' },
+            { label: 'Platformers', icon: Footprints, genre: 'Platform' },
           ].map(({label, icon: Icon, ordering, genre}) => (
             <button key={label} type="button" aria-current={activeTab === 'discover' && activeQuickExplore === label ? 'page' : undefined} className={activeTab === 'discover' && activeQuickExplore === label ? 'studio-link active' : 'studio-link'} onClick={() => chooseQuickExplore({ label, ordering, genre })}><Icon size={18}/> {label}</button>
           ))}
@@ -373,7 +374,9 @@ export default function App() {
 
       {selectedGame && <GameModal game={selectedGame} saved={isSaved(selectedGame)} onClose={() => setSelectedGame(null)} onToggleSave={toggleWishlist} libraryStatus={library[selectedGame.id]?.status || ''} onLibraryStatus={setLibraryStatus} />}
       {compare.length > 0 && <aside className="compare-tray" aria-label="Compare selected games"><span><GitCompareArrows size={17}/> Compare {compare.length}/3</span><div className="compare-names">{compare.map(item => <button key={item.id} onClick={() => toggleCompare(item)} title="Remove game">{item.name} ×</button>)}</div><button className="compare-open" disabled={compare.length < 2} onClick={() => document.getElementById('compare-dialog').showModal()}>Compare games</button><button className="compare-clear" onClick={() => setCompare([])} aria-label="Clear comparison"><X size={16}/></button></aside>}
-      <dialog id="compare-dialog" className="compare-dialog" onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close() }}><div className="compare-header"><h2>Compare games</h2><button onClick={() => document.getElementById('compare-dialog').close()} aria-label="Close comparison"><X/></button></div><div className="compare-grid">{compare.map(game => <div key={game.id} className="compare-column">{game.background_image && <img src={game.background_image} alt=""/>}<h3>{game.name}</h3><p>Rating: {game.rating ? game.rating.toFixed(1) : 'N/A'}</p><p>Released: {game.released || 'Unknown'}</p><p>Genres: {game.genres?.map(g => g.name).join(', ') || 'Unknown'}</p><p>Platforms: {game.platforms?.join(', ') || 'Unknown'}</p></div>)}</div></dialog>
+      <dialog id="compare-dialog" className="compare-dialog compare-insights-dialog" onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close() }}>
+        <CompareInsights games={compare} onRemove={toggleCompare} onClose={() => document.getElementById('compare-dialog').close()} onOpenGame={game => { document.getElementById('compare-dialog').close(); setSelectedGame(game) }}/>
+      </dialog>
       {showTop && <button className="back-top" onClick={() => window.scrollTo({top:0,behavior:'smooth'})} aria-label="Back to top"><ArrowUp size={20}/></button>}
     </div>
   )
