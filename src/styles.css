@@ -291,3 +291,17 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 @media(prefers-reduced-motion:reduce){
  .card-actions .card-status-menu .aurora-select-trigger{transition:none!important}
 }
+
+/* 5.0.6 — preserve full cinematic artwork without cutting off faces or game titles.
+   A blurred copy fills empty space, while the actual image uses contain. */
+.spotlight-image-stack .spotlight-frame {
+  position:absolute;inset:0;overflow:hidden;opacity:0;transform:scale(1.025);
+  transition:opacity 900ms cubic-bezier(.22,1,.36,1),transform 7s linear;
+  pointer-events:none;
+}
+.spotlight-image-stack .spotlight-frame.is-active {opacity:1;transform:scale(1)}
+.spotlight-image-stack .spotlight-frame img {position:absolute;width:100%;height:100%;inset:0;display:block}
+.spotlight-image-stack .spotlight-frame .spotlight-fill {object-fit:cover;filter:blur(22px) brightness(.42) saturate(1.15);transform:scale(1.12)}
+.spotlight-image-stack .spotlight-frame .spotlight-art {object-fit:contain;object-position:center;filter:brightness(.88)}
+.spotlight-main .spotlight-overlay {background:linear-gradient(90deg,rgba(10,9,23,.95) 0%,rgba(10,9,23,.78) 23%,rgba(10,9,23,.38) 49%,rgba(10,9,23,.12) 100%)}
+@media (prefers-reduced-motion:reduce){.spotlight-image-stack .spotlight-frame{transition:none!important;transform:none!important}}
