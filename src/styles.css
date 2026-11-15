@@ -239,3 +239,55 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
   .aurora-select-menu { scrollbar-width: none; scrollbar-gutter: auto; }
   .aurora-select-menu::-webkit-scrollbar { display: none; }
 }
+
+
+/* GameBrowzr 5.0.5 — correctly sized card status selector and floating menu.
+   Scope these rules to avoid affecting the comparison icon or other controls. */
+.card-actions{display:flex;align-items:stretch;gap:8px;min-width:0;position:relative}
+.card-actions .card-status-menu{flex:1 1 auto;min-width:0;max-width:100%;position:relative}
+.card-actions .card-status-menu .aurora-select-trigger{
+  box-sizing:border-box;width:100%;min-width:0;min-height:37px;
+  padding:0 11px;display:flex;align-items:center;justify-content:space-between;
+  gap:7px;text-align:left;border-radius:10px;font-size:11px;line-height:1.3;
+  background:linear-gradient(120deg,#292139,#211c30);
+  border:1px solid #68518480;color:#e7d9f8;
+}
+.card-actions .card-status-menu .aurora-select-trigger>span{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.card-actions .card-status-menu .aurora-select-trigger:hover,
+.card-actions .card-status-menu.is-open .aurora-select-trigger{
+  background:linear-gradient(120deg,#39274f,#30233f);border-color:#b38aff;
+  box-shadow:0 0 20px #9d6be82b;
+}
+.card-actions .card-status-menu .aurora-select-menu{
+  box-sizing:border-box;left:0;right:auto;top:calc(100% + 7px);
+  width:max(100%,156px);min-width:156px;max-width:min(220px,80vw);
+  padding:6px;border-radius:13px;z-index:150;
+}
+.card-actions .card-status-menu .aurora-option{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:39px;height:auto;padding:9px 11px;
+  font-size:11px;line-height:1.4;text-align:left;white-space:normal;
+  background:transparent;border:0;border-radius:9px;color:#dcd0ee;
+}
+.card-actions .card-status-menu .aurora-option:hover,
+.card-actions .card-status-menu .aurora-option.is-highlighted{
+  background:#65448366;color:#fff;
+}
+.card-actions .card-status-menu .aurora-option svg{flex-shrink:0;color:#d6b1ff}
+.card-actions > button:not(.aurora-select-trigger){
+  flex:0 0 37px;width:37px;min-width:37px;min-height:37px;
+  border-radius:10px;display:grid;place-items:center;
+}
+.game-grid .game-card:has(.card-status-menu.is-open){z-index:80}
+@media(max-width:520px){
+ .card-actions{gap:5px}
+ .card-actions .card-status-menu .aurora-select-trigger{min-height:35px;padding:0 7px;font-size:10px}
+ .card-actions > button:not(.aurora-select-trigger){flex-basis:32px;width:32px;min-width:32px;min-height:35px}
+ .card-actions .card-status-menu .aurora-select-menu{min-width:145px}
+ .game-grid .game-card:nth-child(even) .card-status-menu .aurora-select-menu{left:auto;right:0}
+}
+@media(prefers-reduced-motion:reduce){
+ .card-actions .card-status-menu .aurora-select-trigger{transition:none!important}
+}
