@@ -6,6 +6,7 @@ import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
 import AuroraSelect from './components/AuroraSelect'
 import CompareInsights from './components/CompareInsights'
+import { pickSurpriseGame } from './utils/surpriseDiscovery'
 
 const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'iOS', 'Android']
 const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
@@ -98,6 +99,7 @@ export default function App() {
   const [spotlightBroken, setSpotlightBroken] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [visibleCount, setVisibleCount] = useState(48)
+  const recentSurpriseIds = useRef([])
 
   const loadGames = useCallback(async ({ searchText = '', ordering = '-rating', platform = 'All platforms', genre = 'All genres', nextOffset = 0, append = false } = {}) => {
     if (append && loadingRef.current) return
@@ -202,6 +204,15 @@ export default function App() {
       .map(game => ({ game, score: (game.genres || []).reduce((n,g) => n + (interests[g.name] || 0),0) * 10 + (game.rating || 0) }))
       .sort((a,b) => b.score - a.score).slice(0, 8).map(item => item.game)
   }, [games, wishlist, library, spotlightIds])
+  const surpriseMe = () => {
+    const pick = pickSurpriseGame({
+      games, recommendations, wishlist, library, spotlightIds,
+      recentIds: recentSurpriseIds.current,
+    })
+    if (!pick) return
+    recentSurpriseIds.current = [...recentSurpriseIds.current.slice(-9), pick.id]
+    setSelectedGame(pick)
+  }
   const suggestions = useMemo(() => {
     const text = query.trim().toLowerCase()
     return text.length > 1 ? games.filter(game => game.name.toLowerCase().includes(text)).slice(0,5) : []
@@ -323,7 +334,7 @@ export default function App() {
           
         </section>}
         {activeTab === 'discover' && !activeQuickExplore && <section className="curated-section" aria-label="Personalized discoveries">
-          <div className="curated-head"><div><span className="eyebrow"><WandSparkles size={14}/> SMART DISCOVERY</span><h2>Picked for your taste <span className="heading-dot">.</span></h2><p>Recommendations based on your saved games and favorite genres, refreshed as you explore.</p></div><button className="surprise-button" onClick={() => { const pick = recommendations[Math.floor(Math.random()*recommendations.length)] || games[Math.floor(Math.random()*games.length)]; if (pick) setSelectedGame(pick) }}><Dices size={17}/> Surprise me</button></div>
+          <div className="curated-head"><div><span className="eyebrow"><WandSparkles size={14}/> SMART DISCOVERY</span><h2>Picked for your taste <span className="heading-dot">.</span></h2><p>Recommendations based on your saved games and favorite genres, refreshed as you explore.</p></div><button className="surprise-button" onClick={surpriseMe}><Dices size={17}/> Surprise me</button></div>
           <div className="curated-scroll">{recommendations.slice(0,6).map(game => <button className="curated-card" key={game.id} onClick={() => setSelectedGame(game)}><img src={game.background_image} alt="" loading="lazy"/><span>{game.name}</span><small>{game.genres?.slice(0,2).map(g=>g.name).join(' · ') || 'Discover'}</small></button>)}</div>
         </section>}
         {activeTab === 'library' && <section className="insights-panel"><div className="insights-title"><BarChart3 size={21}/><div><h2>Your gaming snapshot</h2><p>Insights from the games you've saved on this device.</p></div></div><div className="insight-grid"><div><span>Total tracked</span><strong>{libraryEntries.length}</strong></div><div><span>Completed</span><strong>{libraryEntries.filter(e=>e.status==='completed').length}</strong></div><div><span>Completion rate</span><strong>{libraryEntries.length ? Math.round(libraryEntries.filter(e=>e.status==='completed').length / libraryEntries.length * 100) : 0}%</strong></div><div><span>Favorite genre</span><strong className="insight-genre">{libraryStats.topGenre || 'Explore games'}</strong></div></div><div className="insights-bars">{Object.entries(libraryStats.genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,count])=><div className="insights-bar" key={name}><span>{name}</span><div><i style={{width:`${Math.max(8,count/Math.max(1,libraryEntries.length)*100)}%`}}/></div><b>{count}</b></div>)}</div></section>}
