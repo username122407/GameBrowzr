@@ -343,3 +343,59 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 @media(max-width:780px){.insights-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.insights-game{width:240px}.compare-insights-dialog{max-height:94dvh}}
 @media(max-width:480px){.insights-wrap{padding:15px}.insights-game{width:220px}.insights-cover{height:125px}.insights-summary>div{padding:10px}}
 @media(prefers-reduced-motion:reduce){.quick-explore-nav .studio-link svg,.insights-game,.insights-details,.insights-close,.insights-bar span{transition:none!important;transform:none!important}}
+
+/* 5.0.8.1: rating meter must not inherit legacy dashboard grid layout. */
+.insights-game .insights-bar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  padding: 0;
+  grid-template-columns: none;
+  gap: 0;
+  background: #3c304d;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.insights-game .insights-bar > span {
+  display: block;
+  max-width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,#8155d2,#e393d2);
+}
+
+
+/* GameBrowzr 5.0.8.2 — scoped, theme-matched comparison scrollbars */
+.compare-insights-dialog,
+.compare-insights-dialog .insights-scroller {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #9d71ca #231a31;
+}
+.compare-insights-dialog::-webkit-scrollbar { width: 9px; height: 9px; }
+.compare-insights-dialog .insights-scroller::-webkit-scrollbar { width: 8px; height: 8px; }
+.compare-insights-dialog::-webkit-scrollbar-track,
+.compare-insights-dialog .insights-scroller::-webkit-scrollbar-track {
+  background: #231a31;
+  border-radius: 999px;
+  margin-block: 13px;
+  margin-inline: 9px;
+}
+.compare-insights-dialog::-webkit-scrollbar-thumb,
+.compare-insights-dialog .insights-scroller::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,#b88ae6,#8053af);
+  border: 2px solid #231a31;
+  border-radius: 999px;
+  min-height: 36px;
+}
+.compare-insights-dialog::-webkit-scrollbar-thumb:hover,
+.compare-insights-dialog .insights-scroller::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,#d2a9f6,#a06ed4);
+}
+.compare-insights-dialog::-webkit-scrollbar-corner { background: #231a31; }
+@media (pointer:coarse) {
+  .compare-insights-dialog,
+  .compare-insights-dialog .insights-scroller {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
