@@ -6,7 +6,7 @@ import GameCard from './components/GameCard'
 import GameModal from './components/GameModal'
 import AuroraSelect from './components/AuroraSelect'
 
-const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'Mobile', 'iOS', 'Android']
+const platformFilters = ['All platforms', 'PC', 'PlayStation', 'Xbox', 'Nintendo', 'iOS', 'Android']
 const catalogGenres = ['All genres', 'Action', 'Adventure', 'Arcade', 'Fighting', 'Indie', 'Music', 'Platform', 'Puzzle', 'Racing', 'Role-playing (RPG)', 'Shooter', 'Simulator', 'Sport', 'Strategy', 'Tactical', 'Turn-based strategy (TBS)', 'Visual Novel']
 const PAGE_SIZE = 60
 const sortOptions = [
@@ -210,7 +210,7 @@ export default function App() {
     let result = activeTab === 'library' ? Object.values(library).filter(entry => libraryFilter === 'all' || entry.status === libraryFilter).map(entry => entry.game) : [...wishlist]
     if (activePlatform !== 'All platforms') result = result.filter(game => (game.parent_platforms || []).some(item => {
       const name = item.platform?.name?.toLowerCase()
-      return activePlatform === 'Mobile' ? ['ios', 'android'].includes(name) : name === activePlatform.toLowerCase()
+      return name === activePlatform.toLowerCase()
     }))
     if (activeGenre !== 'All genres') result = result.filter(game => game.genres?.some(genre => genre.name === activeGenre))
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name))
@@ -236,7 +236,16 @@ export default function App() {
     setActiveTab('discover')
     refreshGames(query, sort)
   }
+  const scrollPageToTop = () => {
+    window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+  }
   const chooseTab = tab => {
+    if (activeTab === tab && !activeQuickExplore) {
+      closeMobileMenu()
+      scrollPageToTop()
+      return
+    }
+    scrollPageToTop()
     setActiveQuickExplore(null)
     setActiveTab(tab)
     setMobileMenuOpen(false)
@@ -246,6 +255,12 @@ export default function App() {
   }
 
   const chooseQuickExplore = ({ label, ordering, genre }) => {
+    if (activeTab === 'discover' && activeQuickExplore === label) {
+      closeMobileMenu()
+      scrollPageToTop()
+      return
+    }
+    scrollPageToTop()
     const nextSort = ordering || '-rating'
     const nextGenre = genre || 'All genres'
     setActiveQuickExplore(label)
