@@ -440,3 +440,20 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 #main-content:focus{outline:none}
 @media(max-width:420px){.studio-top-actions .api-status{display:none}.gb-catalog-account{font-size:.8rem;padding-inline:9px}}
 @media(prefers-reduced-motion:reduce){.studio-workspace .game-card:hover,.studio-workspace .game-card:hover .game-cover{transform:none}}
+
+/* Discover editorial layout */
+.studio-workspace .gb-discover-heading{padding-block:clamp(24px,4vw,48px) 20px}
+.studio-workspace .gb-discover-heading h1{margin:0 0 8px;font-size:clamp(30px,4vw,56px);line-height:1.06}
+.studio-workspace .gb-discover-heading p{margin:0}
+.gb-discover-feature{display:grid;grid-template-columns:minmax(0,1fr) minmax(205px,255px);gap:16px;padding-inline:clamp(22px,4vw,65px);align-items:stretch}
+.gb-discover-feature .spotlight-area{display:block;padding:0;margin:0;min-width:0}
+.gb-discover-feature .spotlight-main{min-height:clamp(320px,33vw,490px);height:100%;background:radial-gradient(ellipse at 78% 20%,#4b2766,#171025 70%);border-radius:20px}
+.gb-discover-shortcuts{background:linear-gradient(145deg,#2e1d40,#1b1329);border:1px solid #4d3663;border-radius:20px;padding:18px;display:grid;align-content:center;gap:8px}
+.gb-discover-shortcuts h2{font-size:1.05rem;margin:0 0 8px;color:#f8f1ff}
+.gb-discover-shortcuts :is(button,a){display:flex;align-items:center;gap:8px;padding:10px;min-height:44px;background:#20152e;border:1px solid #533769;border-radius:9px;color:#f8f1ff;font:inherit;font-size:.85rem;text-align:start;text-decoration:none;cursor:pointer;transition:background-color .18s}
+.gb-discover-shortcuts :is(button,a):hover{background:#422854}
+.gb-discover-shortcuts svg:last-child{margin-left:auto}
+#game-catalog{scroll-margin-top:76px}
+@media(max-width:1100px){.gb-discover-feature{grid-template-columns:minmax(0,1fr)}.gb-discover-shortcuts{display:flex;flex-wrap:wrap;align-items:center}.gb-discover-shortcuts h2{width:100%}}
+@media(max-width:500px){.gb-discover-shortcuts :is(button,a){flex:1 1 135px}.gb-discover-feature .spotlight-main{min-height:305px}}
+@media(prefers-reduced-motion:reduce){.gb-discover-shortcuts :is(button,a){transition:none}}

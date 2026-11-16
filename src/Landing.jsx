@@ -1,4 +1,4 @@
-﻿import { ArrowRight, Compass, GitCompareArrows, Library } from 'lucide-react'
+import { ArrowRight, Compass, GitCompareArrows, Library } from 'lucide-react'
 
 const features = [
   { icon: Compass, title: 'Discover new games', body: 'Filter the IGDB catalog by platform and genre. Dive into trailers, screenshots, and details.', preview: ['Indie gems', 'RPG adventures', 'New releases'] },
@@ -20,7 +20,7 @@ export default function Landing({ signedIn, catalogPath }) {
       <section className="gb-hero gb-container" aria-labelledby="landing-title">
         <div className="gb-hero-text">
           <h1 id="landing-title">Explore<br />Beyond.</h1>
-          <p>Find your next favorite game. Explore the catalog, compare your shortlist, and keep track of every world you want to visit.</p>
+          <p>Find your next game, compare the contenders, and build a collection worth coming back to.</p>
           <div className="gb-hero-actions">
             <a className="gb-button gb-primary" href={catalogPath}>Explore Games <ArrowRight size={18} aria-hidden="true" /></a>
             {!signedIn && <a className="gb-button gb-outline" href="#/register">Create Account</a>}
@@ -31,7 +31,7 @@ export default function Landing({ signedIn, catalogPath }) {
           <img src="/aurora-portal.webp" alt="" width="1440" height="960" fetchPriority="high" />
         </div>
       </section>
-      <section className="gb-features gb-container" id="features" aria-labelledby="features-title">
+      <section className="gb-features gb-container" id="features" tabIndex={-1} aria-labelledby="features-title">
         <h2 id="features-title">How it works</h2>
         <div className="gb-feature-grid">
           {features.map(({ icon: Icon, title, body, preview }) => <article key={title}>
