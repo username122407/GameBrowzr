@@ -68,3 +68,8 @@
 @media(min-width:761px){.gb-editorial-hero{min-height:clamp(510px,40vw,780px)}.gb-editorial-hero picture img{object-position:50% center}}
 @media(max-width:760px){.gb-editorial-copy h1{font-size:clamp(3.55rem,15vw,6rem)}.gb-editorial-hero::after{background:linear-gradient(0deg,#0d0b17 12%,#0d0b17e8 32%,transparent 77%)}}
 
+
+.gb-editorial{background:radial-gradient(ellipse at 0 100%,#442253,transparent 54%),radial-gradient(ellipse at 95% 10%,#392047,transparent 55%),#100a1c}
+.gb-editorial-header{background:linear-gradient(105deg,#160e26,#201335 68%,#2b142a);box-shadow:0 0 0 100vmax #180f26;clip-path:inset(0 -100vmax)}
+.gb-editorial-hero::after{background:linear-gradient(90deg,#10091ee8 0%,#29164472 32%,transparent 65%),linear-gradient(0deg,#28143b60,transparent 36%)}
+@media(max-width:760px){.gb-editorial-hero::after{background:linear-gradient(0deg,#150d26 12%,#150d26e8 32%,transparent 77%)}}

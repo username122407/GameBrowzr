@@ -121,3 +121,19 @@
 @media(max-width:880px){.gb-account .gb-avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.gb-account .gb-profile-panel{grid-template-columns:minmax(0,1fr)}.gb-account .gb-avatar-options{grid-template-columns:repeat(6,minmax(0,1fr))}.gb-account .gb-access-panel .gb-account-brand{background-position:center 35%}}
 @media(max-width:420px){.gb-account .gb-avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.gb-avatar[data-avatar=upload]{background:#291e3a;color:#cbb7ec;background-image:none}
+.gb-account .gb-avatar-upload[aria-disabled=true]{opacity:.65;cursor:wait}
+.gb-account .gb-security{padding-top:18px;margin-top:20px;border-top:1px solid #67517f}
+.gb-security h2{display:flex;align-items:center;gap:8px;font-size:1.05rem;margin:0 0 12px}
+.gb-security details{border:1px solid #67517f;border-radius:8px;background:#1b1427}
+.gb-security summary{cursor:pointer;padding:12px 14px;font-weight:700;min-height:44px}
+.gb-security form{padding:8px 14px 14px}
+.gb-security a{font-size:.88rem}
+.gb-security p:empty{display:none}
+
+
+.gb-account .gb-avatar-upload{position:relative;display:inline-flex;cursor:pointer;width:max-content}
+.gb-account .gb-avatar-upload input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;min-height:0;cursor:pointer;padding:0}
+.gb-account .gb-avatar-upload:focus-within{outline:2px solid #e0caff;outline-offset:3px}
+.gb-account .gb-avatar-upload:has(input:disabled){opacity:.65;cursor:wait}

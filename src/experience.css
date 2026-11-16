@@ -105,3 +105,5 @@ body:has(.back-top) .gb-motion-control{bottom:70px}
 .gb-avatar[data-avatar=duelist]{background:#87375c url('/gamebrowzr-avatars.webp') 0 100%/300% 200% no-repeat}
 .gb-avatar[data-avatar=night]{background:#53447e url('/gamebrowzr-avatars.webp') 50% 100%/300% 200% no-repeat}
 .gb-avatar[data-avatar=specter]{background:#812b71 url('/gamebrowzr-avatars.webp') 100% 100%/300% 200% no-repeat}
+.gb-avatar[data-avatar=upload]{background:#291e3a;color:#cbb7ec;background-image:none}
+.gb-avatar[data-avatar=upload] img{background:#291e3a}

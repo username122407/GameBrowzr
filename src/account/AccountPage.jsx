@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { authRedirect, useAccount } from './AccountProvider.jsx'
-import AvatarPicker from './Avatar.jsx'
+import AvatarPicker, { clearAvatarPhoto } from './Avatar.jsx'
+import AccountSecurity from './AccountSecurity.jsx'
 import './account.css'
 
 const titles = {
@@ -89,6 +90,7 @@ export default function AccountPage({ mode, collections, children }) {
     try {
       const result = await client.auth.signOut({ scope: 'local' })
       if (result.error) throw result.error
+      clearAvatarPhoto(client, user.id)
       window.location.hash = '/discover'
     } catch {
       setError('Could not log out. Try again.')
@@ -127,7 +129,7 @@ export default function AccountPage({ mode, collections, children }) {
         <p role="status" className="gb-account-notice">{notice}</p>
         {mode === 'login' && <div className="gb-account-links"><a href="#/register">Create account</a><a href="#/forgot">Forgot password?</a></div>}
         {(register || forgot) && <a href="#/login">Back to log in</a>}
-        {profile && user && <>{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
+        {profile && user && <><AccountSecurity client={client} user={user} />{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
       </section>
     </div>
   </main>

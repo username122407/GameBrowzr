@@ -654,3 +654,33 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 .gb-atlas .gb-detail-media .screenshot-strip button:focus-visible{outline-offset:-4px}
 .gb-atlas .gb-detail-actions{margin-top:4px}
 @media(max-width:520px){.gb-atlas .gb-detail-media:has(.gb-trailers):has(.screenshot-strip){grid-template-columns:minmax(0,1fr)}.gb-account-link-name{max-width:100px}}
+
+/* Aurora color behind the main catalog, with solid reading surfaces. */
+.gb-atlas.app-shell{
+ background:radial-gradient(ellipse at 5% 14%,#723c9582 0,transparent 47%),
+ radial-gradient(ellipse at 100% 25%,#8a375d70 0,transparent 42%),
+ radial-gradient(ellipse at 52% 80%,#35377975 0,transparent 62%),#110b20;
+}
+.gb-atlas .studio-topbar{background:linear-gradient(100deg,#201333f5,#170e26f7 64%,#321529f5)}
+.gb-atlas .gb-discover-shortcuts{background:linear-gradient(150deg,#382150,#1a1229 63%,#361a35)}
+.gb-atlas .gb-discover-search .filter-bar :is(.search-form,.aurora-select-trigger){background:linear-gradient(130deg,#2a1c3c,#1e162f)}
+.gb-atlas .studio-workspace .curated-card,.gb-atlas .studio-workspace .game-card{background:linear-gradient(155deg,#291c3c,#1c1429 77%);border-color:#73548d}
+.gb-atlas .compare-insights-dialog{background:#130e20;border-radius:12px}
+.gb-atlas .compare-insights-dialog .insights-header{margin-bottom:14px;padding:0}
+.gb-atlas .compare-insights-dialog .insights-header h2{margin:0}
+.gb-atlas .gb-compare-aligned{table-layout:fixed;min-width:570px}
+.gb-atlas .gb-compare-aligned .gb-compare-label-col{width:126px}
+.gb-atlas .gb-compare-aligned :is(th,td){padding:12px 10px;overflow-wrap:anywhere;min-width:0}
+.gb-atlas .gb-compare-aligned thead th{text-align:center;vertical-align:top}
+.gb-atlas .gb-compare-aligned thead th:first-child{text-align:start;vertical-align:middle}
+.gb-atlas .gb-compare-aligned tbody td{text-align:center}
+.gb-atlas .gb-compare-aligned tr:nth-child(even) td{background:#1a1428}
+.gb-atlas .gb-compare-aligned thead th:first-child,.gb-atlas .gb-compare-aligned tbody th{position:sticky;left:0;z-index:1;background:#20162c}
+.gb-atlas .gb-compare-aligned .gb-compare-cover{height:clamp(78px,10vw,112px);margin:0 auto 8px;aspect-ratio:3/4;border:1px solid #80669e80;border-radius:5px;background:#241a34;overflow:hidden}
+.gb-atlas .gb-compare-aligned .gb-compare-cover img{height:100%;width:100%;margin:0;border:0;border-radius:0;object-fit:cover;display:block}
+.gb-atlas .gb-compare-aligned .gb-compare-heading{display:block;font-size:clamp(.8rem,1.4vw,1.04rem);line-height:1.3;letter-spacing:0;text-transform:none}
+.gb-compare-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;list-style:none;padding:0;margin:0}
+.gb-compare-tags li{border:1px solid #715584;border-radius:5px;background:#221934;padding:2px 6px;font-size:.85rem}
+.gb-compare-tags .gb-compare-shared{border-color:#78a693}
+.gb-atlas .gb-compare-aligned .insights-details{width:auto;max-width:100%;margin:0 auto;min-height:40px;padding:7px 12px;border-radius:6px}
+@media(max-width:620px){.gb-atlas .gb-compare-aligned{min-width:500px}.gb-atlas .gb-compare-aligned .gb-compare-label-col{width:95px}.gb-atlas .gb-compare-aligned th:first-child{font-size:.67rem}}
