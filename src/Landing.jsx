@@ -1,12 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Gamepad2, Layers3, Library } from 'lucide-react'
 import './editorial.css'
+import { useBackgroundMotion } from './AuroraBackground.jsx'
 
 const features = [
   { icon: Gamepad2, title: 'Discover games', body: 'Browse by genre or platform, then explore screenshots, trailers, and game details.' },
   { icon: Layers3, title: 'Compare titles', body: 'Put up to three games side by side. Check ratings, release dates, and official storefront links.' },
   { icon: Library, title: 'Build your collection', body: 'Save games to your Wishlist, track progress in your Library, and sync both with an account.' },
 ]
+
+function NebulaBackground() {
+  const motion = useBackgroundMotion()
+  const video = useRef(null)
+
+  useEffect(() => {
+    const element = video.current
+    if (!element) return
+    if (!motion) {
+      element.pause()
+      return
+    }
+    // Keep the poster available when autoplay is blocked or the video is still loading.
+    if (!element.getAttribute('src')) element.src = '/gamebrowzr-nebula.mp4'
+    element.muted = true
+    void element.play().catch(() => {})
+    return () => element.pause()
+  }, [motion])
+
+  return <div className="gb-editorial-media" aria-hidden="true">
+    <img src="/gamebrowzr-nebula-poster.webp" alt="" width="1280" height="720" fetchPriority="high" />
+    <video ref={video} muted playsInline loop preload="none" poster="/gamebrowzr-nebula-poster.webp" />
+  </div>
+}
 
 export default function Landing({ user, client, catalogPath }) {
   const userId = user?.id
@@ -40,9 +65,7 @@ export default function Landing({ user, client, catalogPath }) {
     </header>
     <main id="landing-main" tabIndex={-1}>
       <section className="gb-editorial-hero" aria-labelledby="landing-title">
-        <picture aria-hidden="true">
-          <img src="/gamebrowzr-landing.webp" alt="" width="1983" height="793" fetchPriority="high" />
-        </picture>
+        <NebulaBackground />
         <div className="gb-container gb-editorial-stage">
           <div className="gb-editorial-copy">
             <h1 id="landing-title">Explore<br />Beyond.</h1>

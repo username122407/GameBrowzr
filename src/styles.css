@@ -684,3 +684,9 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 .gb-compare-tags .gb-compare-shared{border-color:#78a693}
 .gb-atlas .gb-compare-aligned .insights-details{width:auto;max-width:100%;margin:0 auto;min-height:40px;padding:7px 12px;border-radius:6px}
 @media(max-width:620px){.gb-atlas .gb-compare-aligned{min-width:500px}.gb-atlas .gb-compare-aligned .gb-compare-label-col{width:95px}.gb-atlas .gb-compare-aligned th:first-child{font-size:.67rem}}
+
+/* Shared plum and cool-lilac palette for the catalog. */
+.gb-atlas.app-shell{background:radial-gradient(ellipse at 4% 8%,#58367573,transparent 45%),radial-gradient(ellipse at 100% 16%,#56304b61,transparent 42%),#120d20}
+.gb-atlas .studio-topbar{background:linear-gradient(105deg,#1e1630fa,#171124f7 62%,#26172cf7)}
+.gb-atlas .gb-discover-shortcuts{background:linear-gradient(145deg,#2d1e43,#1c142d 72%,#2b1a35)}
+.gb-atlas .studio-workspace .curated-card,.gb-atlas .studio-workspace .game-card{background:linear-gradient(155deg,#251b37,#1c152c);border-color:#745a8c}

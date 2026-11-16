@@ -73,3 +73,23 @@
 .gb-editorial-header{background:linear-gradient(105deg,#160e26,#201335 68%,#2b142a);box-shadow:0 0 0 100vmax #180f26;clip-path:inset(0 -100vmax)}
 .gb-editorial-hero::after{background:linear-gradient(90deg,#10091ee8 0%,#29164472 32%,transparent 65%),linear-gradient(0deg,#28143b60,transparent 36%)}
 @media(max-width:760px){.gb-editorial-hero::after{background:linear-gradient(0deg,#150d26 12%,#150d26e8 32%,transparent 77%)}}
+
+/* Silent nebula with a dark left scrim for the editorial type. */
+.gb-editorial {
+  --paper:#f8f4ff;
+  --muted:#d4c6e4;
+  --line:#a48cbc60;
+  background:radial-gradient(ellipse at 78% 100%,#302049,transparent 65%),#120d20;
+}
+.gb-editorial-header{background:linear-gradient(110deg,#120e20,#221730 70%,#2a182f);box-shadow:0 0 0 100vmax #160f23}
+.gb-editorial-media{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.gb-editorial-media img,.gb-editorial-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% center}
+.gb-editorial-hero::after{background:linear-gradient(90deg,#100a1de8 0%,#160f24b8 29%,#130e2050 56%,#180f252b 100%),linear-gradient(0deg,#160d26ab,transparent 35%)}
+.gb-editorial-copy p{color:#f0e8fa;max-width:32ch}
+.gb-editorial-actions .gb-editorial-cta{background:linear-gradient(135deg,#ead8ff,#c4a5ed);color:#231337}
+.gb-editorial-secondary{background:#1d142cb0;border-color:#bca2d9}
+.gb-editorial-feature-list svg{color:#c9aee9}
+@media(max-width:760px){
+ .gb-editorial-media img,.gb-editorial-media video{object-position:65% center}
+ .gb-editorial-hero::after{background:linear-gradient(0deg,#140e22 4%,#140e22ed 29%,#170d24af 49%,#110c2030 78%)}
+}

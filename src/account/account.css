@@ -102,7 +102,7 @@
 .gb-account .gb-account-checkbox input{accent-color:#a5d7cb}
 @media(max-width:720px){.gb-account .gb-access-panel .gb-account-brand{min-height:180px}.gb-account .gb-profile-avatar{grid-row:auto}}
 
-.gb-account .gb-access-panel .gb-account-brand{background:#20152c url('/gamebrowzr-account.webp') center 47%/cover no-repeat}
+.gb-account .gb-access-panel .gb-account-brand{background:#20152c url('/gamebrowzr-landing.webp') center 47%/cover no-repeat}
 .gb-account .gb-profile-panel{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
 .gb-account .gb-profile-avatar{padding:clamp(18px,3.4vw,44px);border-color:#67517f}
 .gb-account .gb-profile-avatar .gb-avatar-picker{padding:0;display:grid;justify-items:center;text-align:center;gap:12px;min-width:0}
@@ -137,3 +137,10 @@
 .gb-account .gb-avatar-upload input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;min-height:0;cursor:pointer;padding:0}
 .gb-account .gb-avatar-upload:focus-within{outline:2px solid #e0caff;outline-offset:3px}
 .gb-account .gb-avatar-upload:has(input:disabled){opacity:.65;cursor:wait}
+
+.gb-account{background:radial-gradient(ellipse at 10% 17%,#2d1e45,transparent 60%),#140e22}
+.gb-account .gb-account-topbar{background:linear-gradient(105deg,#181127,#22172f)}
+.gb-account .gb-access-panel .gb-account-brand{background-position:63% center}
+.gb-account .gb-account-panel{background:#191227;border-color:#836b9e}
+.gb-account .gb-account-primary{background:linear-gradient(135deg,#ead8ff,#c4a5ed);color:#231337}
+@media(max-width:720px){.gb-account .gb-access-panel .gb-account-brand{background-position:64% 56%}}

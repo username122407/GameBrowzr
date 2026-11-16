@@ -42,10 +42,11 @@ function GameBrowzr() {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AccountProvider>
-      <AuroraBackground />
-      <Suspense fallback={<p className="gb-loading" role="status">Loading GameBrowzr…</p>}>
-        <GameBrowzr />
-      </Suspense>
+      <AuroraBackground>
+        <Suspense fallback={<p className="gb-loading" role="status">Loading GameBrowzr…</p>}>
+          <GameBrowzr />
+        </Suspense>
+      </AuroraBackground>
     </AccountProvider>
   </React.StrictMode>,
 )
