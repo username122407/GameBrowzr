@@ -84,6 +84,8 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   const navigateScreenshot = delta => setViewer(current => current?.type === 'image' ? { type: 'image', index: (current.index + delta + screenshots.length) % screenshots.length } : current)
   const youtubeId = id => /^[a-zA-Z0-9_-]{11}$/.test(String(id || '')) ? String(id) : null
 
+  const videos = (details.videos || []).filter(video => youtubeId(video.id))
+
   return (
     <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
       <section ref={detailsPanel} inert={mediaOpen} className="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -105,17 +107,25 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
         </div>
         <div className="modal-body">
           <div className="modal-section">
-            <div className="section-heading"><Monitor size={17} /><h3>Available platforms</h3></div>
+            <div className="section-heading"><Monitor size={17} /><h3>Platform support</h3></div>
             <div className="chip-row">
               {platforms.length ? platforms.map(platform => <span className="platform-chip" key={platform}>{platform}</span>) : <span className="muted">Platform data not available.</span>}
             </div>
           </div>
-          {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
-          <div className="gb-detail-media">
-          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
-          {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
-          </div>
-          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect disabled={collectionDisabled} className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
+          {(videos.length > 0 || screenshots.length > 0) && <div className="gb-detail-media">
+            {videos.length > 0 && <div className="modal-section gb-trailers">
+              <div className="section-heading"><h3>Trailers</h3></div>
+              <div className="gb-trailer-strip">{videos.map(video =>
+                <button type="button" className="gb-trailer-card" key={video.id}
+                  onClick={() => setViewer({ type: 'video', id: video.id, name: video.name })} aria-label={'Play ' + (video.name || 'trailer')}>
+                  <img src={'https://img.youtube.com/vi/' + video.id + '/hqdefault.jpg'} loading="lazy" alt="" />
+                  <PlayCircle className="gb-trailer-play" size={38} aria-hidden="true" />
+                  <span>{video.name || 'Trailer'}</span>
+                </button>
+              )}</div>
+            </div>}
+          {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots ({screenshots.length})</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
+          </div>}
           <div className="gb-detail-actions">
             <a className="primary-button" href="#gb-detail-stores" onClick={event => {
               event.preventDefault()
@@ -126,6 +136,8 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
           </button>
             <button type="button" className="secondary-button" aria-pressed={comparing} disabled={!comparing && compareFull} onClick={() => onCompare(game)}><GitCompareArrows size={16} aria-hidden="true" /> {comparing ? 'Remove from compare' : 'Compare'}</button>
           </div>
+          {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
+          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect disabled={collectionDisabled} className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
           <div className="modal-section gb-detail-stores" id="gb-detail-stores">
             <div className="section-heading"><ExternalLink size={17} /><h3>Where to play & buy</h3></div>
             <p className="helper-text">Direct links below come from IGDB's game-specific external listings. Check the store page for the correct edition, region, price, and availability.</p>

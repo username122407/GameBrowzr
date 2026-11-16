@@ -1,9 +1,9 @@
-﻿import { useEffect, useState } from 'react'
-import { Aperture, Bot, Ghost, MoonStar, Rocket, Swords } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Upload } from 'lucide-react'
 
 const presets = [
-  ['orbit', 'Orbit', Aperture], ['pilot', 'Pilot', Rocket], ['specter', 'Specter', Ghost],
-  ['mech', 'Mech', Bot], ['night', 'Night', MoonStar], ['duelist', 'Duelist', Swords],
+  ['orbit', 'Astronaut'], ['pilot', 'Pilot'], ['mech', 'Mech'],
+  ['duelist', 'Duelist'], ['night', 'Fox'], ['specter', 'Ranger'],
 ]
 const bucket = 'gamebrowzr-avatars'
 const objectPath = id => id + '/avatar.webp'
@@ -30,10 +30,9 @@ export function Avatar({ client, user, className = '' }) {
   }, [choice, client, revision, userId])
 
   const preset = presets.find(([id]) => id === choice) || presets[0]
-  const Icon = preset[2]
   const showUpload = choice === 'upload' && image?.userId === userId && image.revision === revision
   return <span className={'gb-avatar ' + className} data-avatar={preset[0]} aria-hidden="true">
-    {showUpload ? <img src={image.url} alt="" onError={() => setImage(null)} /> : <Icon />}
+    {showUpload ? <img src={image.url} alt="" onError={() => setImage(null)} /> : null}
   </span>
 }
 
@@ -56,6 +55,7 @@ async function prepareImage(file) {
 
 export default function AvatarPicker({ client, user }) {
   const choice = user.user_metadata?.gamebrowzr_avatar || 'orbit'
+  const fileInput = useRef(null)
   const [pending, setPending] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -79,24 +79,26 @@ export default function AvatarPicker({ client, user }) {
     finally { setPending(false) }
   }
 
-  return <fieldset className="gb-avatar-picker" disabled={pending}>
-    <legend>Profile picture</legend>
+  return <section className="gb-avatar-picker" aria-label="Profile picture" aria-busy={pending}>
     <Avatar client={client} user={user} className="gb-avatar-preview" />
-    <div className="gb-avatar-options">
-      {presets.map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={choice === id} onClick={() => save(id)}>
-        <span className="gb-avatar" data-avatar={id} aria-hidden="true"><Icon /></span><span>{label}</span>
-      </button>)}
-    </div>
-    <label>Upload your own picture
-      <input type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="gb-avatar-help" onChange={event => {
-        const file = event.currentTarget.files[0]
-        event.currentTarget.value = ''
-        if (file) void save('upload', file)
-      }} />
-    </label>
-    <small id="gb-avatar-help">JPG, PNG, or WebP up to 5 MB. Your image is cropped to a square and visible to you.</small>
-    <p role="status">{pending ? 'Saving profile picture…' : message}</p>
+    <button className="gb-avatar-upload" type="button" disabled={pending} aria-describedby="gb-avatar-help" onClick={() => fileInput.current?.click()}>
+      <Upload size={17} aria-hidden="true" /> Upload photo
+    </button>
+    <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={event => {
+      const file = event.currentTarget.files[0]
+      event.currentTarget.value = ''
+      if (file) void save('upload', file)
+    }} />
+    <p id="gb-avatar-help">JPG, PNG, or WebP up to 5 MB. Photos are square-cropped and private.</p>
+    <fieldset className="gb-avatar-choices" disabled={pending}>
+      <legend>Choose an avatar</legend>
+      <div className="gb-avatar-options">
+        {presets.map(([id, label]) => <button key={id} type="button" aria-label={label} aria-pressed={choice === id} onClick={() => save(id)}>
+          <span className="gb-avatar" data-avatar={id} aria-hidden="true" /><span>{label}</span>
+        </button>)}
+      </div>
+    </fieldset>
+    <p className="gb-avatar-status" role="status">{pending ? 'Saving profile picture…' : message}</p>
     {error && <p role="alert">{error}</p>}
-  </fieldset>
+  </section>
 }
-

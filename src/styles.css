@@ -637,3 +637,20 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
  .gb-detail-media:has(.video-grid):has(.screenshot-strip){grid-template-columns:minmax(130px,.9fr) minmax(0,1.2fr)}
 }
 @media(max-width:820px){.gb-atlas .modal-hero{min-height:0;padding:40px 10px 12px}.gb-atlas .modal-body{padding-inline:10px}}
+
+.gb-account-link-name{max-width:min(22vw,200px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gb-atlas .gb-detail-description{display:block;overflow:visible;-webkit-line-clamp:unset;max-width:68ch}
+.gb-atlas .modal-body .chip-row .platform-chip{border:0;border-radius:0;background:none;color:#f6f2ff;padding:4px 8px 4px 0}
+.gb-atlas .gb-detail-media:has(.gb-trailers):has(.screenshot-strip){grid-template-columns:minmax(0,1fr) minmax(0,1.28fr)}
+.gb-trailer-strip{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 5px;scroll-snap-type:x mandatory}
+.gb-trailer-card{position:relative;flex:0 0 100%;min-width:0;aspect-ratio:16/9;border:1px solid #a48abd;border-radius:5px;background:#1e152a;color:#fff;overflow:hidden;padding:0;cursor:pointer;scroll-snap-align:start}
+.gb-trailer-card img{width:100%;height:100%;object-fit:cover;display:block}
+.gb-trailer-card span{position:absolute;inset:auto 0 0;text-align:left;padding:6px 9px;background:#0d0b17dd;color:#fff;font-size:.78rem;font-weight:720;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gb-trailer-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d0b17b0;border-radius:50%}
+.gb-trailer-card:focus-visible{outline-offset:-4px}
+.gb-atlas .gb-detail-media .screenshot-strip{display:flex;overflow-x:auto;gap:6px;padding:3px 2px 5px;scroll-snap-type:x proximity}
+.gb-atlas .gb-detail-media .screenshot-strip button{flex:0 0 calc((100% - 12px)/3);min-width:56px;max-width:none;aspect-ratio:3/4;border:1px solid #a48abd;border-radius:5px;scroll-snap-align:start}
+.gb-atlas .gb-detail-media .screenshot-strip img{width:100%;height:100%;object-fit:cover}
+.gb-atlas .gb-detail-media .screenshot-strip button:focus-visible{outline-offset:-4px}
+.gb-atlas .gb-detail-actions{margin-top:4px}
+@media(max-width:520px){.gb-atlas .gb-detail-media:has(.gb-trailers):has(.screenshot-strip){grid-template-columns:minmax(0,1fr)}.gb-account-link-name{max-width:100px}}

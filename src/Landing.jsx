@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Gamepad2, Layers3, Library } from 'lucide-react'
 import './editorial.css'
 
@@ -7,7 +8,23 @@ const features = [
   { icon: Library, title: 'Build your collection', body: 'Save games to your Wishlist, track progress in your Library, and sync both with an account.' },
 ]
 
-export default function Landing({ signedIn, catalogPath }) {
+export default function Landing({ user, client, catalogPath }) {
+  const userId = user?.id
+  const [profile, setProfile] = useState(null)
+  useEffect(() => {
+    if (!client || !userId) return
+    let current = true
+    async function loadName() {
+      try {
+        const { data, error } = await client.from('gamebrowzr_profiles').select('display_name').eq('user_id', userId).maybeSingle()
+        if (!error && current) setProfile({ userId, name: data?.display_name })
+      } catch { /* Use the sign-up display name if the profile is unavailable. */ }
+    }
+    void loadName()
+    return () => { current = false }
+  }, [client, userId])
+  const displayName = (profile?.userId === userId && profile?.name) || user?.user_metadata?.display_name || 'Account'
+
   return <div className="gb-landing gb-editorial">
     <a href="#landing-main" className="gb-skip">Skip to content</a>
     <header className="gb-container gb-editorial-header">
@@ -16,8 +33,8 @@ export default function Landing({ signedIn, catalogPath }) {
       </a>
       <nav aria-label="Main navigation">
         <a className="gb-editorial-guide" href="#features">How it works</a>
-        <a className="gb-editorial-account" href={signedIn ? '#/account' : '#/login'}>
-          {signedIn ? 'My account' : 'Log In'}
+        <a className="gb-editorial-account" href={user ? '#/account' : '#/login'}>
+          {user ? displayName : 'Log In'}
         </a>
       </nav>
     </header>
@@ -32,7 +49,7 @@ export default function Landing({ signedIn, catalogPath }) {
             <p>Find your next game. Compare titles and build your collection.</p>
             <div className="gb-editorial-actions">
               <a className="gb-editorial-cta" href={catalogPath}>Explore Games</a>
-              {!signedIn && <a className="gb-editorial-secondary" href="#/register">Create Account</a>}
+              {!user && <a className="gb-editorial-secondary" href="#/register">Create Account</a>}
             </div>
           </div>
         </div>
@@ -50,4 +67,3 @@ export default function Landing({ signedIn, catalogPath }) {
     <footer className="gb-container gb-footer"><span>GameBrowzr</span><a href="https://www.igdb.com/">Game data by IGDB</a></footer>
   </div>
 }
-

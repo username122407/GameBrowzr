@@ -101,3 +101,23 @@
 .gb-account .gb-avatar-options button[aria-pressed=true]{background:#382548;border-color:#c9a6f5}
 .gb-account .gb-account-checkbox input{accent-color:#a5d7cb}
 @media(max-width:720px){.gb-account .gb-access-panel .gb-account-brand{min-height:180px}.gb-account .gb-profile-avatar{grid-row:auto}}
+
+.gb-account .gb-access-panel .gb-account-brand{background:#20152c url('/gamebrowzr-account.webp') center 47%/cover no-repeat}
+.gb-account .gb-profile-panel{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.gb-account .gb-profile-avatar{padding:clamp(18px,3.4vw,44px);border-color:#67517f}
+.gb-account .gb-profile-avatar .gb-avatar-picker{padding:0;display:grid;justify-items:center;text-align:center;gap:12px;min-width:0}
+.gb-account .gb-profile-avatar .gb-avatar-preview{width:clamp(135px,17vw,215px);height:clamp(135px,17vw,215px);margin:0;border:2px solid #d6baff}
+.gb-account .gb-avatar-upload{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #a48abd;border-radius:6px;color:#f6f2ff;background:#1a1425}
+.gb-account .gb-avatar-upload:hover:not(:disabled){background:#39264a}
+.gb-account .gb-avatar-upload:focus-visible{outline:2px solid #e0caff;outline-offset:3px}
+.gb-account #gb-avatar-help,.gb-account .gb-avatar-status{font-size:.84rem;color:#dfcfe9;margin:0;max-width:36ch}
+.gb-account .gb-avatar-status:empty{display:none}
+.gb-account .gb-avatar-choices{width:100%;min-width:0;padding:12px 0 0;border:0;border-top:1px solid #67517f}
+.gb-account .gb-avatar-choices legend{font-weight:750;padding-inline:8px;text-align:left}
+.gb-account .gb-avatar-options{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin:0}
+.gb-account .gb-avatar-options button{padding:4px 1px;gap:3px;font-size:.66rem;min-width:0}
+.gb-account .gb-avatar-options button .gb-avatar{width:min(100%,45px);aspect-ratio:1;height:auto;border:1px solid #967db3}
+.gb-account .gb-avatar-options button[aria-pressed=true] .gb-avatar{outline:2px solid #c9a6f5;outline-offset:2px}
+@media(max-width:880px){.gb-account .gb-avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.gb-account .gb-profile-panel{grid-template-columns:minmax(0,1fr)}.gb-account .gb-avatar-options{grid-template-columns:repeat(6,minmax(0,1fr))}.gb-account .gb-access-panel .gb-account-brand{background-position:center 35%}}
+@media(max-width:420px){.gb-account .gb-avatar-options{grid-template-columns:repeat(3,minmax(0,1fr))}}

@@ -53,7 +53,7 @@ export default function AccountPage({ mode, collections, children }) {
     try {
       let result
       if (profile) {
-        const saved = await collections.saveProfile({ displayName: name, spotlightAutoplay: form.has('spotlightAutoplay') })
+        const saved = await collections.saveProfile({ displayName: name })
         if (!saved) throw new Error('Profile not saved')
         setNotice('Profile saved.')
         return
@@ -103,11 +103,7 @@ export default function AccountPage({ mode, collections, children }) {
       <a className="gb-account-back" href="#/discover" onClick={recovery ? finishRecovery : undefined}><ArrowLeft size={17} aria-hidden="true" /> Explore games</a>
     </header>
     <div className={profile ? "gb-account-panel gb-profile-panel" : "gb-account-panel gb-access-panel"}>
-      {profile && user ? <aside className="gb-profile-avatar"><AvatarPicker key={user.id} client={client} user={user} /></aside> : <aside className="gb-account-brand">
-        <a href="#/" aria-label="GameBrowzr home" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="76" height="76" alt="" /></a>
-        <strong>Explore<br /> Beyond.</strong>
-        <p>Your Wishlist and Library, wherever you play.</p>
-      </aside>}
+      {profile && user ? <aside className="gb-profile-avatar"><AvatarPicker key={user.id} client={client} user={user} /></aside> : <aside className="gb-account-brand" aria-hidden="true" />}
       <section className="gb-account-form" aria-labelledby="account-heading">
         <p className="gb-account-caption">{profile ? 'Profile' : 'Account access'}</p>
         <h1 id="account-heading" ref={heading} tabIndex={-1}>{title}</h1>
@@ -122,7 +118,6 @@ export default function AccountPage({ mode, collections, children }) {
           {(profile || register) && <label>Display name <input name="name" autoComplete="nickname" defaultValue={profile ? collections.profile?.display_name ?? user.user_metadata?.display_name ?? '' : ''} required maxLength={48} /></label>}
           {profile && <>
             <p className="gb-account-email">{user.email}</p>
-            <label className="gb-account-checkbox"><input name="spotlightAutoplay" type="checkbox" defaultChecked={collections.preferences.spotlightAutoplay} /> Autoplay Spotlight</label>
           </>}
           {!profile && !reset && <label>Email address <input name="email" type="email" autoComplete="email" required maxLength={254} /></label>}
           {!profile && !forgot && <label>{reset ? 'New password' : 'Password'} <span className="gb-password-field"><input name="password" type={showPassword ? "text" : "password"} autoComplete={register || reset ? 'new-password' : 'current-password'} required minLength={register || reset ? 8 : undefined} maxLength={72} /><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button></span></label>}

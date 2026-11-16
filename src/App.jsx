@@ -47,6 +47,7 @@ export default function App() {
   const { client, user } = useAccount()
   const collections = useCollections(client, user?.id)
   const { wishlist, library, toggleWishlist, setLibraryStatus, preferences } = collections
+  const displayName = collections.profile?.display_name || user?.user_metadata?.display_name || 'Account'
   const collectionDisabled = !collections.canEdit
   const [selectedGame, setSelectedGame] = useState(null)
   const [compare, setCompare] = useState([])
@@ -361,7 +362,7 @@ export default function App() {
           )}
         </nav>
         <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
-        <div className="studio-top-actions"><a className="gb-catalog-account" href={user ? "#/account" : "#/login"}>{user && <Avatar client={client} user={user} />}{user ? "My account" : "Log In"}</a><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{loading ? 'Loading catalog…' : usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
+        <div className="studio-top-actions"><a className="gb-catalog-account" href={user ? "#/account" : "#/login"}>{user && <Avatar client={client} user={user} />}<span className="gb-account-link-name">{user ? displayName : "Log In"}</span></a><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{loading ? 'Loading catalog…' : usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
       <main id="main-content" tabIndex={-1}>
         {showDiscovery && <div className="gb-discover-search">{filters}</div>}

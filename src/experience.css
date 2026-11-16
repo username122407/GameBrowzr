@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: dark;
   --gb-background: #0b0812;
   --gb-panel: #171023;
@@ -97,3 +97,11 @@ body:has(.back-top) .gb-motion-control{bottom:70px}
 
 .gb-landing main{overflow:clip}
 @media(max-width:760px){.gb-hero::before{display:none}}
+
+/* Illustrated profile portraits are shared by the profile and catalog header. */
+.gb-avatar{background-image:url('/gamebrowzr-avatars.webp');background-size:300% 200%;background-repeat:no-repeat;background-position:0 0}
+.gb-avatar[data-avatar=pilot]{background:#344888 url('/gamebrowzr-avatars.webp') 50% 0/300% 200% no-repeat}
+.gb-avatar[data-avatar=mech]{background:#21606f url('/gamebrowzr-avatars.webp') 100% 0/300% 200% no-repeat}
+.gb-avatar[data-avatar=duelist]{background:#87375c url('/gamebrowzr-avatars.webp') 0 100%/300% 200% no-repeat}
+.gb-avatar[data-avatar=night]{background:#53447e url('/gamebrowzr-avatars.webp') 50% 100%/300% 200% no-repeat}
+.gb-avatar[data-avatar=specter]{background:#812b71 url('/gamebrowzr-avatars.webp') 100% 100%/300% 200% no-repeat}

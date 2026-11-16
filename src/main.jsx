@@ -17,7 +17,7 @@ function getRoute() {
 
 function GameBrowzr() {
   const [route, setRoute] = useState(getRoute)
-  const { user, ready, recovery } = useAccount()
+  const { user, client, ready, recovery } = useAccount()
   useEffect(() => {
     const updateRoute = () => setRoute(getRoute())
     window.addEventListener('hashchange', updateRoute)
@@ -36,7 +36,7 @@ function GameBrowzr() {
       ? <CollectionAccount key={user.id} />
       : <AccountPage key={mode} mode={mode} />
   }
-  return <Landing signedIn={Boolean(user)} catalogPath={catalogPath} />
+  return <Landing user={user} client={client} catalogPath={catalogPath} />
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
