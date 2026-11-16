@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, LockKeyhole } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { authRedirect, useAccount } from './AccountProvider.jsx'
 import AvatarPicker from './Avatar.jsx'
 import './account.css'
@@ -16,6 +16,7 @@ export default function AccountPage({ mode, collections, children }) {
   const { client, user, ready, configured, recovery, issue, finishRecovery } = useAccount()
   const heading = useRef(null)
   const [profileLoaded, setProfileLoaded] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -97,7 +98,10 @@ export default function AccountPage({ mode, collections, children }) {
   }
 
   return <main className="gb-account" id="main-content">
-    <a className="gb-account-back" href="#/discover" onClick={recovery ? finishRecovery : undefined}><ArrowLeft size={17} aria-hidden="true" /> Explore games</a>
+    <header className="gb-account-topbar">
+      <a className="gb-brand" href="#/" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="32" height="32" alt="" />GameBrowzr</a>
+      <a className="gb-account-back" href="#/discover" onClick={recovery ? finishRecovery : undefined}><ArrowLeft size={17} aria-hidden="true" /> Explore games</a>
+    </header>
     <div className={profile ? "gb-account-panel gb-profile-panel" : "gb-account-panel gb-access-panel"}>
       {profile && user ? <aside className="gb-profile-avatar"><AvatarPicker key={user.id} client={client} user={user} /></aside> : <aside className="gb-account-brand">
         <a href="#/" aria-label="GameBrowzr home" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="76" height="76" alt="" /></a>
@@ -105,7 +109,7 @@ export default function AccountPage({ mode, collections, children }) {
         <p>Your Wishlist and Library, wherever you play.</p>
       </aside>}
       <section className="gb-account-form" aria-labelledby="account-heading">
-        <LockKeyhole size={24} aria-hidden="true" />
+        <p className="gb-account-caption">{profile ? 'Profile' : 'Account access'}</p>
         <h1 id="account-heading" ref={heading} tabIndex={-1}>{title}</h1>
         {!ready && <p role="status">Checking your session…</p>}
         {ready && !configured && <p role="status">Accounts aren’t configured for this site yet. You can still explore as a guest.</p>}
@@ -121,7 +125,7 @@ export default function AccountPage({ mode, collections, children }) {
             <label className="gb-account-checkbox"><input name="spotlightAutoplay" type="checkbox" defaultChecked={collections.preferences.spotlightAutoplay} /> Autoplay Spotlight</label>
           </>}
           {!profile && !reset && <label>Email address <input name="email" type="email" autoComplete="email" required maxLength={254} /></label>}
-          {!profile && !forgot && <label>{reset ? 'New password' : 'Password'} <input name="password" type="password" autoComplete={register || reset ? 'new-password' : 'current-password'} required minLength={register || reset ? 8 : undefined} maxLength={72} /></label>}
+          {!profile && !forgot && <label>{reset ? 'New password' : 'Password'} <span className="gb-password-field"><input name="password" type={showPassword ? "text" : "password"} autoComplete={register || reset ? 'new-password' : 'current-password'} required minLength={register || reset ? 8 : undefined} maxLength={72} /><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button></span></label>}
           <button className="gb-account-primary" type="submit" disabled={busy || (profile && collections.busy)}>{busy ? 'Working…' : profile ? 'Save profile' : forgot ? 'Send reset link' : reset ? 'Update password' : title}<ArrowRight size={17} aria-hidden="true" /></button>
         </form>}
         {error && <p role="alert">{error}</p>}

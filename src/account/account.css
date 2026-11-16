@@ -78,3 +78,26 @@
 .gb-account .gb-profile-avatar .gb-avatar-preview{width:clamp(96px,13vw,165px);height:clamp(96px,13vw,165px);border:2px solid #c9b4f8}
 @media(max-width:720px){.gb-account .gb-profile-avatar{border-right:0;border-bottom:1px solid #674e7b;grid-row:2}}
 
+
+.gb-account{padding:0 0 50px;background:#0f0b16}
+.gb-account .gb-account-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px clamp(16px,3vw,42px);border-bottom:1px solid #80669e;background:#120e1b}
+.gb-account .gb-account-topbar .gb-brand{text-decoration:none;color:#f6f2ff}
+.gb-account .gb-account-topbar .gb-account-back{color:#f6f2ff;text-decoration:none;font-size:.86rem}
+.gb-account .gb-account-panel{width:min(1100px,calc(100% - 32px));margin:18px auto 0;border-radius:5px;border-color:#80669e;background:#130e1b}
+.gb-account .gb-account-form{padding:clamp(23px,4vw,50px)}
+.gb-account .gb-account-caption{color:#d3a9f7;letter-spacing:.15em;text-transform:uppercase;font-size:.78rem;font-weight:850;margin:0 0 8px}
+.gb-account .gb-account-form h1{text-transform:uppercase;letter-spacing:.09em;font-size:clamp(1.7rem,4vw,3.2rem);margin:0 0 20px}
+.gb-account .gb-account-form label{color:#f6f2ff}
+.gb-account .gb-account-form input{border-color:#9277ad;background:#1a1324;border-radius:5px}
+.gb-account .gb-account-primary{border-radius:5px;background:#cca5f5;justify-content:center;min-height:42px}
+.gb-account .gb-password-field{position:relative;width:100%}
+.gb-account .gb-password-field input{padding-inline-end:47px}
+.gb-account .gb-password-field button{min-height:36px;position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:0 9px;display:grid;place-items:center;background:none;color:#f6f2ff;border:0}
+.gb-account .gb-access-panel .gb-account-brand{background-image:url('/gamebrowzr-landing.webp');background-position:67% center;color:transparent;min-height:400px}
+.gb-account .gb-access-panel .gb-account-brand>*{display:none}
+.gb-account .gb-profile-avatar{display:grid;align-items:center;background:#130e1b}
+.gb-account .gb-profile-avatar .gb-avatar-picker{background:none;border:0}
+.gb-account .gb-avatar-options button{border-color:transparent;background:none}
+.gb-account .gb-avatar-options button[aria-pressed=true]{background:#382548;border-color:#c9a6f5}
+.gb-account .gb-account-checkbox input{accent-color:#a5d7cb}
+@media(max-width:720px){.gb-account .gb-access-panel .gb-account-brand{min-height:180px}.gb-account .gb-profile-avatar{grid-row:auto}}

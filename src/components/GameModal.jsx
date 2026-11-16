@@ -1,6 +1,6 @@
 import AuroraSelect from './AuroraSelect'
 import { useEffect, useRef, useState } from 'react'
-import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search } from 'lucide-react'
+import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search, GitCompareArrows } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
 
 const storeSearch = {
@@ -16,7 +16,7 @@ const storeSearch = {
   Android: [['Google Play', name => `https://play.google.com/store/search?q=${encodeURIComponent(name)}&c=apps`]],
 }
 
-export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus, collectionDisabled }) {
+export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus, collectionDisabled, onCompare, comparing, compareFull }) {
   const [details, setDetails] = useState(game)
   const [loading, setLoading] = useState(false)
   const [viewer, setViewer] = useState(null)
@@ -93,12 +93,14 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
         <div className="gb-detail-content">
         <div className="modal-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(10,10,16,.96), rgba(10,10,16,.35)), url("${details.background_image || game.background_image || ''}")` }}>
           <div className="modal-hero-content">
-            <span className="eyebrow">GAME DETAILS</span>
+            <div className="gb-detail-crumb">Games <span aria-hidden="true">/</span> {game.name}</div>
             <h2 id="modal-title">{game.name}</h2>
             <div className="modal-stats">
-              <span><Star size={15} fill="currentColor" /> {game.rating > 0 ? Number(game.rating).toFixed(1) + ' / 5' : 'Not rated'}</span>
+              <span className="gb-detail-rating"><Star size={15} fill="currentColor" aria-hidden="true" /> {game.rating > 0 ? Number(game.rating).toFixed(1) + ' / 5' : 'Not rated'}</span>
               {game.released && <span><CalendarDays size={15} /> {game.released}</span>}
+              {!!game.genres?.length && <span>{game.genres.slice(0, 2).map(genre => genre.name).join(' / ')}</span>}
             </div>
+            <p className="gb-detail-description">{loading ? 'Loading description…' : description || 'A description is not available for this game.'}</p>
           </div>
         </div>
         <div className="modal-body">
@@ -108,7 +110,23 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
               {platforms.length ? platforms.map(platform => <span className="platform-chip" key={platform}>{platform}</span>) : <span className="muted">Platform data not available.</span>}
             </div>
           </div>
-          <div className="modal-section">
+          {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
+          <div className="gb-detail-media">
+          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
+          {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
+          </div>
+          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect disabled={collectionDisabled} className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
+          <div className="gb-detail-actions">
+            <a className="primary-button" href="#gb-detail-stores" onClick={event => {
+              event.preventDefault()
+              detailsPanel.current?.querySelector('#gb-detail-stores')?.scrollIntoView({ block: 'start' })
+            }}><ExternalLink size={16} aria-hidden="true" /> Where to play</a>
+          <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} disabled={collectionDisabled} onClick={() => onToggleSave(game)}>
+            <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
+          </button>
+            <button type="button" className="secondary-button" aria-pressed={comparing} disabled={!comparing && compareFull} onClick={() => onCompare(game)}><GitCompareArrows size={16} aria-hidden="true" /> {comparing ? 'Remove from compare' : 'Compare'}</button>
+          </div>
+          <div className="modal-section gb-detail-stores" id="gb-detail-stores">
             <div className="section-heading"><ExternalLink size={17} /><h3>Where to play & buy</h3></div>
             <p className="helper-text">Direct links below come from IGDB's game-specific external listings. Check the store page for the correct edition, region, price, and availability.</p>
             {loading && <p className="muted" role="status">Checking direct storefront listings…</p>}
@@ -123,17 +141,6 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
             {!loading && uniqueDirectStores.length === 0 && searchStores.length === 0 && <p className="muted">No storefront links are available for this title.</p>}
             <p className="helper-text">Game page opens a game-specific listing supplied by IGDB. Store search opens a search result, not a confirmed product page.</p>
           </div>
-          <div className="modal-section">
-            <div className="section-heading"><span className="description-dot" /><h3>About the game</h3></div>
-            {loading ? <p className="muted">Loading game description…</p> : <p className="description-text">{description || 'A description is not available for this game.'}</p>}
-          </div>
-          {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
-          {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
-          {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
-          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect disabled={collectionDisabled} className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
-          <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} disabled={collectionDisabled} onClick={() => onToggleSave(game)}>
-            <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
-          </button>
           <p className="data-credit">Game information and artwork provided by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>.</p>
         </div>
         </div>

@@ -379,12 +379,6 @@ export default function App() {
             <button type="button" onClick={() => chooseQuickExplore({ label: 'Indie gems', genre: 'Indie' })}><Shapes size={19} aria-hidden="true" /> Indie gems <ChevronRight size={17} aria-hidden="true" /></button>
             <button type="button" onClick={() => chooseQuickExplore({ label: 'RPG adventures', genre: 'Role-playing (RPG)' })}><Mountain size={19} aria-hidden="true" /> RPG adventures <ChevronRight size={17} aria-hidden="true" /></button>
             <button type="button" onClick={() => chooseQuickExplore({ label: 'Simulation', genre: 'Simulator' })}><Joystick size={19} aria-hidden="true" /> Simulation <ChevronRight size={17} aria-hidden="true" /></button>
-            <details className="gb-rail-genres">
-              <summary>More genres</summary>
-              <div>{shortcuts.filter(({ label }) => !['New releases', 'Indie gems', 'RPG adventures', 'Simulation'].includes(label)).map(({ icon: Icon, ...shortcut }) =>
-                <button type="button" key={shortcut.label} onClick={() => chooseQuickExplore(shortcut)}><Icon size={16} aria-hidden="true" /> {shortcut.label}</button>
-              )}</div>
-            </details>
             <button className="gb-rail-surprise" type="button" onClick={surpriseMe}><Dices size={19} aria-hidden="true" /> Surprise me <ArrowRight size={17} aria-hidden="true" /></button><span className="gb-surprise-notice" role="status">{surpriseNotice}</span>
           </aside>
         </div>}
@@ -432,7 +426,7 @@ export default function App() {
         <span className="copyright">© {new Date().getFullYear()} GameBrowzr · Student capstone project</span>
       </footer>
 
-      {selectedGame && <Suspense fallback={<p className="gb-modal-loading" role="status">Opening game details?</p>}><GameModal collectionDisabled={collectionDisabled} game={selectedGame} saved={isSaved(selectedGame)} onClose={() => setSelectedGame(null)} onToggleSave={toggleWishlist} libraryStatus={library[selectedGame.id]?.status || ''} onLibraryStatus={setLibraryStatus} /></Suspense>}
+      {selectedGame && <Suspense fallback={<p className="gb-modal-loading" role="status">Opening game details…</p>}><GameModal onCompare={toggleCompare} comparing={compare.some(game => game.id === selectedGame.id)} compareFull={compare.length >= 3} collectionDisabled={collectionDisabled} game={selectedGame} saved={isSaved(selectedGame)} onClose={() => setSelectedGame(null)} onToggleSave={toggleWishlist} libraryStatus={library[selectedGame.id]?.status || ''} onLibraryStatus={setLibraryStatus} /></Suspense>}
       {compare.length > 0 && <aside className="compare-tray" aria-label="Compare selected games"><span><GitCompareArrows size={17}/> Compare {compare.length}/3</span><div className="compare-names">{compare.map(item => <button key={item.id} onClick={() => toggleCompare(item)} title="Remove game">{item.name} ×</button>)}</div><button className="compare-open" disabled={compare.length < 2} onClick={() => document.getElementById('compare-dialog').showModal()}>Compare games</button><button className="compare-clear" onClick={() => setCompare([])} aria-label="Clear comparison"><X size={16}/></button></aside>}
       <dialog id="compare-dialog" className="compare-dialog compare-insights-dialog" onClick={e => { if (e.target === e.currentTarget) e.currentTarget.close() }}>
         <CompareInsights games={compare} onRemove={toggleCompare} onClose={() => document.getElementById('compare-dialog').close()} onOpenGame={game => { document.getElementById('compare-dialog').close(); setSelectedGame(game) }}/>

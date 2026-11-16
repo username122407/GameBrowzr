@@ -18,17 +18,13 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
   const newest = dates.length === games.length && games.length > 1 ? games.reduce((best,g) => releaseOf(g) > releaseOf(best) ? g : best) : null
   return <div className="insights-wrap">
     <header className="insights-header"><div><div className="insights-kicker"><GitCompareArrows size={15}/> GAME COMPARISON</div><h2>Compare games</h2><p>Compare ratings, release dates, genres and platform support side by side.</p></div><button className="insights-close" type="button" onClick={onClose} aria-label="Close comparison"><X size={21}/></button></header>
-    <div className="insights-summary" aria-label="Comparison highlights">
-      <div><Star size={16}/><span>Highest rated</span><strong>{leaders.length ? leaders.map(game => game.name).join(', ') : 'Not enough ratings'}</strong></div>
-      <div><CalendarDays size={16}/><span>Most recent</span><strong>{newest ? newest.name : 'Date unavailable'}</strong></div>
-      <div><Layers3 size={16}/><span>Shared genres</span><strong>{commonGenres.length ? commonGenres.join(', ') : 'None listed'}</strong></div>
-      <div><Monitor size={16}/><span>Shared platforms</span><strong>{commonPlatforms.length ? commonPlatforms.join(', ') : 'None listed'}</strong></div>
-    </div>
     <div className="insights-scroller" tabIndex={0} aria-label="Scrollable game comparison">
       <table className="gb-compare-table">
         <thead><tr><th scope="col">Game</th>{games.map(game => <th scope="col" key={game.id}>
           {game.background_image && <img src={game.background_image} alt="" loading="lazy" />}
-          <span>{game.name}</span>
+          <div className="gb-compare-heading"><span>{game.name}</span>
+            {ratingOf(game) !== null && <strong className="gb-compare-badge"><Star size={13} fill="currentColor" aria-hidden="true" /> {ratingOf(game).toFixed(1)} / 5</strong>}
+          </div>
           <button type="button" onClick={() => onRemove(game)} aria-label={'Remove ' + game.name + ' from comparison'}><X size={16}/></button>
         </th>)}</tr></thead>
         <tbody>
@@ -42,6 +38,12 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
           <tr><th scope="row">Details</th>{games.map(game => <td key={game.id}><button type="button" className="insights-details" onClick={() => onOpenGame(game)}>View game <ArrowUpRight size={16}/></button></td>)}</tr>
         </tbody>
       </table>
+    </div>
+    <div className="insights-summary" aria-label="Comparison highlights">
+      <div><Star size={16}/><span>Highest rated</span><strong>{leaders.length ? leaders.map(game => game.name).join(', ') : 'Not enough ratings'}</strong></div>
+      <div><CalendarDays size={16}/><span>Most recent</span><strong>{newest ? newest.name : 'Date unavailable'}</strong></div>
+      <div><Layers3 size={16}/><span>Shared genres</span><strong>{commonGenres.length ? commonGenres.join(', ') : 'None listed'}</strong></div>
+      <div><Monitor size={16}/><span>Shared platforms</span><strong>{commonPlatforms.length ? commonPlatforms.join(', ') : 'None listed'}</strong></div>
     </div>
     <footer className="insights-footer"><Info size={15}/><span>Ratings are sourced from IGDB when available. Shared tags are highlighted. This comparison does not represent game quality beyond the available data.</span></footer>
   </div>
