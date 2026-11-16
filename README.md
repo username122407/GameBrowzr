@@ -173,3 +173,7 @@ Search now queries IGDB directly instead of filtering the initial 40 games. The 
 
 ## Maximum catalog loading
 The API now requests up to 500 games per page (IGDB maximum per request), and the catalog automatically fetches the next page when the user scrolls near the end. It does not fetch the whole IGDB database at once. This can be heavy on slow connections and browsers; consider reducing page size to 100 if performance suffers.
+
+## Accounts and cloud collections
+
+See [Account setup](ACCOUNT_SETUP.md) for the Supabase migration, Auth redirects, environment settings, and test instructions.

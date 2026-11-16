@@ -9,13 +9,13 @@ export const demoGames = [
   },
   {
     id: 'demo-2', name: 'Stardew Valley', background_image: 'https://images.unsplash.com/photo-1493711662062-fa541dadf2fc?w=900',
-    released: '2016-02-26', rating: 4.8, metacritic: 89, genres: [{ name: 'Indie' }, { name: 'Simulation' }],
+    released: '2016-02-26', rating: 4.8, metacritic: 89, genres: [{ name: 'Indie' }, { name: 'Simulator' }],
     parent_platforms: [{ platform: { name: 'PC' } }, { platform: { name: 'PlayStation' } }, { platform: { name: 'Xbox' } }, { platform: { name: 'Nintendo' } }, { platform: { name: 'iOS' } }, { platform: { name: 'Android' } }],
     short_screenshots: [], esrb_rating: { name: 'Everyone 10+' }
   },
   {
     id: 'demo-3', name: 'Forza Horizon 5', background_image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=900',
-    released: '2021-11-09', rating: 4.5, metacritic: 92, genres: [{ name: 'Racing' }, { name: 'Sports' }],
+    released: '2021-11-09', rating: 4.5, metacritic: 92, genres: [{ name: 'Racing' }, { name: 'Sport' }],
     parent_platforms: [{ platform: { name: 'PC' } }, { platform: { name: 'Xbox' } }],
     short_screenshots: [], esrb_rating: { name: 'Everyone' }
   },
@@ -27,7 +27,7 @@ export const demoGames = [
   },
   {
     id: 'demo-5', name: 'Minecraft', background_image: 'https://images.unsplash.com/photo-1607513746994-51f730a44832?w=900',
-    released: '2011-11-18', rating: 4.4, metacritic: 78, genres: [{ name: 'Adventure' }, { name: 'Simulation' }],
+    released: '2011-11-18', rating: 4.4, metacritic: 78, genres: [{ name: 'Adventure' }, { name: 'Simulator' }],
     parent_platforms: [{ platform: { name: 'PC' } }, { platform: { name: 'PlayStation' } }, { platform: { name: 'Xbox' } }, { platform: { name: 'Nintendo' } }, { platform: { name: 'iOS' } }, { platform: { name: 'Android' } }],
     short_screenshots: [], esrb_rating: { name: 'Everyone 10+' }
   },

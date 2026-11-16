@@ -1,5 +1,5 @@
 import AuroraSelect from './AuroraSelect'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
 
@@ -16,10 +16,13 @@ const storeSearch = {
   Android: [['Google Play', name => `https://play.google.com/store/search?q=${encodeURIComponent(name)}&c=apps`]],
 }
 
-export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus }) {
+export default function GameModal({ game, saved, onClose, onToggleSave, libraryStatus, onLibraryStatus, collectionDisabled }) {
   const [details, setDetails] = useState(game)
   const [loading, setLoading] = useState(false)
   const [viewer, setViewer] = useState(null)
+  const detailsPanel = useRef(null)
+  const mediaPanel = useRef(null)
+  const mediaOpen = Boolean(viewer)
 
   useEffect(() => {
     let active = true
@@ -32,6 +35,30 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
     }
     return () => { active = false }
   }, [game.id])
+
+  useEffect(() => {
+    const returnFocus = document.activeElement
+    const panel = mediaOpen ? mediaPanel.current : detailsPanel.current
+    const focusable = () => [...panel.querySelectorAll('button:not([disabled]), a[href], iframe, [tabindex="0"]')]
+      .filter(element => element.tabIndex >= 0 && element.getClientRects().length)
+    panel.querySelector('button')?.focus()
+    const trapTab = event => {
+      if (event.key !== 'Tab') return
+      const items = focusable()
+      const first = items[0]
+      const last = items.at(-1)
+      const active = document.activeElement
+      if (!panel.contains(active) || (event.shiftKey ? active === first : active === last)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first)?.focus()
+      }
+    }
+    window.addEventListener('keydown', trapTab)
+    return () => {
+      window.removeEventListener('keydown', trapTab)
+      if (returnFocus?.isConnected) returnFocus.focus()
+    }
+  }, [mediaOpen])
 
   useEffect(() => {
     const onKey = event => { if (event.key === 'Escape') { if (viewer) setViewer(null); else onClose() } }
@@ -59,7 +86,7 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
 
   return (
     <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
-      <section className="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <section ref={detailsPanel} inert={mediaOpen} className="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={20} /></button>
         <div className="modal-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(10,10,16,.96), rgba(10,10,16,.35)), url("${details.background_image || game.background_image || ''}")` }}>
           <div className="modal-hero-content">
@@ -87,7 +114,7 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
                 <span>{store.label}<small className="store-link-kind">Game page</small></span><ExternalLink size={15}/>
               </a>)}
               {searchStores.map(store => <a className="store-link" href={store.url} target="_blank" rel="noopener noreferrer" key={store.label} title={`Search ${store.label} for ${game.name}`}>
-                <span>{store.label}<small className="store-link-kind">Store search</small></span><Search size={15}/>
+                <span>{store.label}<small className="store-link-kind">{store.label === "Apple App Store" ? "Store homepage" : "Store search"}</small></span><Search size={15}/>
               </a>)}
             </div>}
             {!loading && uniqueDirectStores.length === 0 && searchStores.length === 0 && <p className="muted">No storefront links are available for this title.</p>}
@@ -100,17 +127,17 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
           {details.developers?.length > 0 && <div className="modal-section"><div className="section-heading"><Building2 size={17}/><h3>Developers</h3></div><p className="helper-text">{details.developers.join(' · ')}</p></div>}
           {details.videos?.length > 0 && <div className="modal-section"><div className="section-heading"><PlayCircle size={17}/><h3>Game videos</h3></div><div className="video-grid">{details.videos.filter(video => youtubeId(video.id)).map(video => <button type="button" className="media-video-button" onClick={() => setViewer({ type: 'video', id: youtubeId(video.id), name: video.name })} key={video.id} aria-label={`Play ${video.name || 'game trailer'} here`}><img src={`https://img.youtube.com/vi/${youtubeId(video.id)}/hqdefault.jpg`} loading="lazy" alt=""/><span><PlayCircle size={15}/> {video.name}</span></button>)}</div></div>}
           {screenshots.length > 0 && <div className="modal-section"><div className="section-heading"><h3>Screenshots</h3></div><div className="screenshot-strip">{screenshots.map((url, i) => <button type="button" className="media-screenshot-button" key={url} onClick={() => openScreenshot(i)} aria-label={`Enlarge screenshot ${i + 1}`}><img src={url} alt={`${game.name} screenshot ${i + 1}`} loading="lazy" /></button>)}</div></div>}
-          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
-          <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} onClick={() => onToggleSave(game)}>
+          <div className="modal-section"><div className="section-heading"><h3>Track your progress</h3></div><AuroraSelect disabled={collectionDisabled} className="modal-status-menu" label="Track your progress" value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Not in my library'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /></div>
+          <button className={`primary-button modal-wishlist ${saved ? 'saved' : ''}`} disabled={collectionDisabled} onClick={() => onToggleSave(game)}>
             <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
           </button>
           <p className="data-credit">Game information and artwork provided by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>.</p>
         </div>
       </section>
       {viewer && <div className="media-viewer-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setViewer(null) }}>
-        <section className="media-viewer" role="dialog" aria-modal="true" aria-label={viewer.type === 'video' ? `Trailer: ${viewer.name || game.name}` : `Screenshot ${viewer.index + 1} of ${screenshots.length}`}>
+        <section ref={mediaPanel} className="media-viewer" role="dialog" aria-modal="true" aria-label={viewer.type === 'video' ? `Trailer: ${viewer.name || game.name}` : `Screenshot ${viewer.index + 1} of ${screenshots.length}`}>
           <div className="media-viewer-header"><span>{viewer.type === 'video' ? (viewer.name || `${game.name} trailer`) : `${game.name} · ${viewer.index + 1} / ${screenshots.length}`}</span><button type="button" onClick={() => setViewer(null)} aria-label="Close media viewer"><X size={22}/></button></div>
-          {viewer.type === 'video' ? <div className="media-video-frame"><iframe key={viewer.id} src={`https://www.youtube-nocookie.com/embed/${viewer.id}?autoplay=1&rel=0`} title={viewer.name || `${game.name} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /></div> : <div className="media-image-frame"><img src={highResScreenshot(screenshots[viewer.index])} alt={`${game.name} screenshot ${viewer.index + 1}`} />{screenshots.length > 1 && <><button type="button" className="media-viewer-prev" onClick={() => navigateScreenshot(-1)} aria-label="Previous screenshot">‹</button><button type="button" className="media-viewer-next" onClick={() => navigateScreenshot(1)} aria-label="Next screenshot">›</button></>}</div>}
+          {viewer.type === 'video' ? <div className="media-video-frame"><iframe key={viewer.id} src={`https://www.youtube-nocookie.com/embed/${viewer.id}?rel=0`} title={viewer.name || `${game.name} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /></div> : <div className="media-image-frame"><img src={highResScreenshot(screenshots[viewer.index])} alt={`${game.name} screenshot ${viewer.index + 1}`} />{screenshots.length > 1 && <><button type="button" className="media-viewer-prev" onClick={() => navigateScreenshot(-1)} aria-label="Previous screenshot">‹</button><button type="button" className="media-viewer-next" onClick={() => navigateScreenshot(1)} aria-label="Next screenshot">›</button></>}</div>}
           {viewer.type === 'video' && <p className="media-viewer-note">Video playback depends on the uploader's embedding permissions.</p>}
         </section>
       </div>}

@@ -418,3 +418,25 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 .game-modal::-webkit-scrollbar-corner{background:#20182d}
 @media(max-width:600px){.insights-panel .insights-bar{grid-template-columns:minmax(68px,90px) minmax(0,1fr) 46px;gap:8px;font-size:11px}.insights-panel .insights-bar>b{font-size:10px}.game-modal::-webkit-scrollbar{width:5px}}
 @media(prefers-reduced-motion:reduce){.insights-panel .insights-bar>div>i{transition:none}}
+
+.skip-link{position:fixed;inset:12px auto auto 12px;z-index:100;padding:10px 16px;border-radius:8px;background:#241931;color:#f4eefc;transform:translateY(-200%)}
+.skip-link:focus{transform:none}
+#main-content{scroll-margin-top:72px}
+.spotlight-action:disabled{opacity:.55;cursor:default}
+@media(max-width:820px){.studio-sidebar:not(.sidebar-open){visibility:hidden;transition:transform .42s cubic-bezier(.22,1,.36,1),visibility 0s .42s}}
+
+/* Aurora catalog refinements */
+.studio-top-actions{display:flex;align-items:center;gap:12px}
+.gb-catalog-account{color:#f8f1ff;text-decoration:none;border:1px solid #72528d;border-radius:9px;padding:8px 12px;min-height:36px;display:inline-flex;align-items:center;white-space:nowrap;background:#241831;transition:background-color .18s}
+.gb-catalog-account:hover{background:#39254b}
+.gb-modal-loading{position:fixed;bottom:20px;left:50%;translate:-50% 0;z-index:100;padding:12px 20px;border-radius:10px;background:#241831;color:#f8f1ff}
+.studio-workspace .game-card{background:linear-gradient(155deg,#241831,#14101f 75%);border-color:#352647}
+.studio-workspace .game-card:hover{transform:translateY(-4px);border-color:#8e67af}
+.studio-workspace .game-card .game-cover{transition:transform .4s cubic-bezier(.22,.75,.24,1)}
+.studio-workspace .game-card:hover .game-cover{transform:scale(1.045)}
+.studio-workspace .insights-panel,.spotlight-main{border-color:#4d3663}
+.spotlight-navigation .spotlight-nav-button{min-width:40px;min-height:40px}
+.aurora-select-trigger:disabled,.game-card .save-button:disabled,.modal-wishlist:disabled{opacity:.5;cursor:not-allowed}
+#main-content:focus{outline:none}
+@media(max-width:420px){.studio-top-actions .api-status{display:none}.gb-catalog-account{font-size:.8rem;padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){.studio-workspace .game-card:hover,.studio-workspace .game-card:hover .game-cover{transform:none}}

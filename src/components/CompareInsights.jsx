@@ -8,7 +8,8 @@ const intersection = groups => groups.length ? groups.reduce((common, next) => c
 
 export default function CompareInsights({ games, onRemove, onClose, onOpenGame }) {
   const rated = games.filter(g => ratingOf(g) !== null)
-  const leader = rated.length > 1 ? rated.reduce((best, g) => ratingOf(g) > ratingOf(best) ? g : best) : null
+  const maxRating = Math.max(...rated.map(ratingOf))
+  const leaders = games.length > 1 && rated.length === games.length ? rated.filter(game => ratingOf(game) === maxRating) : []
   const genreSets = games.map(genresOf)
   const platformSets = games.map(platformsOf)
   const commonGenres = intersection(genreSets)
@@ -18,7 +19,7 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
   return <div className="insights-wrap">
     <header className="insights-header"><div><div className="insights-kicker"><GitCompareArrows size={15}/> GAME COMPARISON</div><h2>Find your next favorite.</h2><p>Compare ratings, release dates, genres and platform support side by side.</p></div><button className="insights-close" type="button" onClick={onClose} aria-label="Close comparison"><X size={21}/></button></header>
     <div className="insights-summary" aria-label="Comparison highlights">
-      <div><Star size={16}/><span>Highest rated</span><strong>{leader ? leader.name : 'Not enough ratings'}</strong></div>
+      <div><Star size={16}/><span>Highest rated</span><strong>{leaders.length ? leaders.map(game => game.name).join(', ') : 'Not enough ratings'}</strong></div>
       <div><CalendarDays size={16}/><span>Most recent</span><strong>{newest ? newest.name : 'Date unavailable'}</strong></div>
       <div><Layers3 size={16}/><span>Shared genres</span><strong>{commonGenres.length ? commonGenres.join(', ') : 'None listed'}</strong></div>
       <div><Monitor size={16}/><span>Shared platforms</span><strong>{commonPlatforms.length ? commonPlatforms.join(', ') : 'None listed'}</strong></div>
@@ -31,7 +32,7 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
             <div className="insights-cover">{game.background_image ? <img src={game.background_image} alt="" loading="lazy"/> : <div className="insights-cover-placeholder">Artwork unavailable</div>}<button type="button" onClick={() => onRemove(game)} aria-label={`Remove ${game.name} from comparison`}><X size={16}/></button></div>
             <div className="insights-game-body">
               <h3 title={game.name}>{game.name}</h3>
-              <div className="insights-row-title"><Star size={14}/> Community rating {leader?.id === game.id && <span className="insights-leader"><Check size={12}/> Highest</span>}</div>
+              <div className="insights-row-title"><Star size={14}/> Community rating {leaders.some(item => item.id === game.id) && <span className="insights-leader"><Check size={12}/> Highest</span>}</div>
               <div className="insights-score">{rating === null ? 'Not rated' : <><strong>{rating.toFixed(1)}</strong><small> / 5</small></>}</div>
               <div className="insights-bar"><span style={{width:`${rating === null ? 0 : rating * 20}%`}}/></div>
               <div className="insights-row-title"><CalendarDays size={14}/> Release date</div>

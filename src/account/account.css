@@ -1,0 +1,51 @@
+﻿.gb-account {
+  min-height: 100svh;
+  padding: clamp(24px, 5vw, 72px);
+  background: radial-gradient(ellipse at 23% 20%, #432356 0, transparent 54%), #100d18;
+  color: #fbf5ff;
+}
+.gb-account a { color: #e1c7ff; text-underline-offset: 4px }
+.gb-account-back { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 650 }
+.gb-account-panel {
+  display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  margin: 40px auto; max-width: 980px; overflow: hidden;
+  border: 1px solid #75558c; border-radius: 26px;
+  background: #211529; box-shadow: 0 26px 90px #08051196;
+  animation: gb-account-enter .38s cubic-bezier(.2,.8,.2,1) both;
+}
+.gb-account-brand, .gb-account-form { padding: clamp(28px, 6vw, 72px); min-width: 0 }
+.gb-account-brand { background: linear-gradient(158deg, #622d74, #2b163e 74%); align-content: center }
+.gb-account-brand img { object-fit: contain }
+.gb-account-brand strong { display: block; margin-block: 26px 14px; font-size: clamp(46px, 7vw, 88px); font-weight: 780; line-height: .95; letter-spacing: -.075em }
+.gb-account-brand p, .gb-account-form > p { color: #e3cfe9; line-height: 1.6; overflow-wrap: anywhere }
+.gb-account-form h1 { margin: 12px 0 26px; font-size: clamp(30px, 4vw, 46px); line-height: 1; letter-spacing: -.045em }
+.gb-account-form form { display: grid; gap: 16px }
+.gb-account-form label { display: grid; gap: 7px; font-size: .88rem; font-weight: 680 }
+.gb-account-form input { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid #866497; border-radius: 9px; background: #150f1e; color: #fff; font: inherit; font-size: 1rem }
+.gb-account-form input:focus-visible, .gb-account :is(a,button):focus-visible { outline: 2px solid #ecd4ff; outline-offset: 4px }
+.gb-account button { cursor: pointer; min-height: 46px; border-radius: 10px; font: inherit; font-weight: 730; padding: 10px 16px }
+.gb-account button:disabled { cursor: wait; opacity: .7 }
+.gb-account-primary { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #dac1fa; color: #251335; border: 1px solid #dac1fa }
+.gb-account-primary:hover:not(:disabled) { background: #f0e0ff }
+.gb-account-secondary { color: #f6e8ff; border: 1px solid #9470a4; background: #372046; margin-top: 16px }
+.gb-account-links { display: flex; flex-wrap: wrap; gap: 12px 20px }
+.gb-account-notice:empty { margin: 12px 0 0 }
+.gb-account-form [role=alert] { color: #ffc8d8 }
+@keyframes gb-account-enter { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: none } }
+@media (max-width: 720px) {
+  .gb-account-panel { grid-template-columns: 1fr; margin-top: 22px }
+  .gb-account-brand strong br { display: none }
+  .gb-account-brand strong { font-size: 40px }
+  .gb-account-brand img { width: 48px; height: 48px }
+}
+@media (prefers-reduced-motion: reduce) { .gb-account-panel { animation: none } }
+.gb-account-form .gb-account-checkbox { display: flex; align-items: center; gap: 10px; min-height: 44px }
+.gb-account-form .gb-account-checkbox input { width: 20px; min-height: auto; height: 20px; accent-color: #dac1fa }
+
+.gb-account .account-import { border-top: 1px solid #75558c; margin-top: 22px; padding-top: 18px }
+.gb-account .account-import h2 { font-size: 1.1rem; margin: 0 }
+.gb-account .account-import p { color: #e3cfe9; line-height: 1.5 }
+.gb-account .account-import button { background: #372046; border: 1px solid #9470a4; color: #f6e8ff }
+.gb-account .account-actions { display: flex; flex-wrap: wrap; gap: 8px }
+.gb-account .account-import [role=status]:empty { display: none }
+
