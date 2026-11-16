@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, GitCompareArrows, Layers3, Monitor, Star, CalendarDays, X, Info } from 'lucide-react'
+import { ArrowUpRight, GitCompareArrows, Layers3, Monitor, Star, CalendarDays, X, Info } from 'lucide-react'
 
 const genresOf = game => [...new Set((game.genres || []).map(x => typeof x === 'string' ? x : x?.name).filter(Boolean))]
 const platformsOf = game => [...new Set([...(game.parent_platforms || []).map(x => x?.platform?.name), ...(game.platforms || []).map(x => typeof x === 'string' ? x : x?.name)].filter(Boolean))]
@@ -17,7 +17,7 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
   const dates = games.map(releaseOf).filter(Boolean)
   const newest = dates.length === games.length && games.length > 1 ? games.reduce((best,g) => releaseOf(g) > releaseOf(best) ? g : best) : null
   return <div className="insights-wrap">
-    <header className="insights-header"><div><div className="insights-kicker"><GitCompareArrows size={15}/> GAME COMPARISON</div><h2>Find your next favorite.</h2><p>Compare ratings, release dates, genres and platform support side by side.</p></div><button className="insights-close" type="button" onClick={onClose} aria-label="Close comparison"><X size={21}/></button></header>
+    <header className="insights-header"><div><div className="insights-kicker"><GitCompareArrows size={15}/> GAME COMPARISON</div><h2>Compare games</h2><p>Compare ratings, release dates, genres and platform support side by side.</p></div><button className="insights-close" type="button" onClick={onClose} aria-label="Close comparison"><X size={21}/></button></header>
     <div className="insights-summary" aria-label="Comparison highlights">
       <div><Star size={16}/><span>Highest rated</span><strong>{leaders.length ? leaders.map(game => game.name).join(', ') : 'Not enough ratings'}</strong></div>
       <div><CalendarDays size={16}/><span>Most recent</span><strong>{newest ? newest.name : 'Date unavailable'}</strong></div>
@@ -25,27 +25,23 @@ export default function CompareInsights({ games, onRemove, onClose, onOpenGame }
       <div><Monitor size={16}/><span>Shared platforms</span><strong>{commonPlatforms.length ? commonPlatforms.join(', ') : 'None listed'}</strong></div>
     </div>
     <div className="insights-scroller" tabIndex={0} aria-label="Scrollable game comparison">
-      <div className="insights-columns" style={{'--compare-count': games.length}}>
-        {games.map(game => {
-          const rating = ratingOf(game), genres = genresOf(game), platforms = platformsOf(game), date = releaseOf(game)
-          return <article className="insights-game" key={game.id}>
-            <div className="insights-cover">{game.background_image ? <img src={game.background_image} alt="" loading="lazy"/> : <div className="insights-cover-placeholder">Artwork unavailable</div>}<button type="button" onClick={() => onRemove(game)} aria-label={`Remove ${game.name} from comparison`}><X size={16}/></button></div>
-            <div className="insights-game-body">
-              <h3 title={game.name}>{game.name}</h3>
-              <div className="insights-row-title"><Star size={14}/> Community rating {leaders.some(item => item.id === game.id) && <span className="insights-leader"><Check size={12}/> Highest</span>}</div>
-              <div className="insights-score">{rating === null ? 'Not rated' : <><strong>{rating.toFixed(1)}</strong><small> / 5</small></>}</div>
-              <div className="insights-bar"><span style={{width:`${rating === null ? 0 : rating * 20}%`}}/></div>
-              <div className="insights-row-title"><CalendarDays size={14}/> Release date</div>
-              <p className="insights-value">{date ? date.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : 'Unknown'} {newest?.id === game.id && <span className="insights-leader">Newest</span>}</p>
-              <div className="insights-row-title"><Layers3 size={14}/> Genres <small>{genres.length ? `${genres.length} listed` : ''}</small></div>
-              <div className="insights-tags">{genres.length ? genres.map(x => <span key={x} className={commonGenres.includes(x) ? 'is-shared' : ''}>{x}</span>) : <em>Not available</em>}</div>
-              <div className="insights-row-title"><Monitor size={14}/> Platforms <small>{platforms.length ? `${platforms.length} listed` : ''}</small></div>
-              <div className="insights-tags">{platforms.length ? platforms.map(x => <span key={x} className={commonPlatforms.includes(x) ? 'is-shared' : ''}>{x}</span>) : <em>Not available</em>}</div>
-              <button type="button" className="insights-details" onClick={() => onOpenGame(game)}>Explore details <ArrowUpRight size={16}/></button>
-            </div>
-          </article>
-        })}
-      </div>
+      <table className="gb-compare-table">
+        <thead><tr><th scope="col">Game</th>{games.map(game => <th scope="col" key={game.id}>
+          {game.background_image && <img src={game.background_image} alt="" loading="lazy" />}
+          <span>{game.name}</span>
+          <button type="button" onClick={() => onRemove(game)} aria-label={'Remove ' + game.name + ' from comparison'}><X size={16}/></button>
+        </th>)}</tr></thead>
+        <tbody>
+          <tr><th scope="row">Rating</th>{games.map(game => {
+            const rating = ratingOf(game)
+            return <td key={game.id}><strong className="gb-compare-rating">{rating === null ? 'Not rated' : rating.toFixed(1) + ' / 5'}</strong>{rating !== null && <meter className="gb-compare-meter" min={0} max={5} value={rating} aria-label={game.name + ' rating'} />}</td>
+          })}</tr>
+          <tr><th scope="row">Release date</th>{games.map(game => <td key={game.id}>{game.released || 'Unknown'}</td>)}</tr>
+          <tr><th scope="row">Genres</th>{genreSets.map((genres, i) => <td key={games[i].id}>{genres.map(genre => <span key={genre} className={commonGenres.includes(genre) ? 'gb-compare-shared' : undefined}>{genre}</span>)}{!genres.length && 'Not available'}</td>)}</tr>
+          <tr><th scope="row">Platforms</th>{platformSets.map((platforms, i) => <td key={games[i].id}>{platforms.map(platform => <span key={platform} className={commonPlatforms.includes(platform) ? 'gb-compare-shared' : undefined}>{platform}</span>)}{!platforms.length && 'Not available'}</td>)}</tr>
+          <tr><th scope="row">Details</th>{games.map(game => <td key={game.id}><button type="button" className="insights-details" onClick={() => onOpenGame(game)}>View game <ArrowUpRight size={16}/></button></td>)}</tr>
+        </tbody>
+      </table>
     </div>
     <footer className="insights-footer"><Info size={15}/><span>Ratings are sourced from IGDB when available. Shared tags are highlighted. This comparison does not represent game quality beyond the available data.</span></footer>
   </div>

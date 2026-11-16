@@ -88,12 +88,15 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
     <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
       <section ref={detailsPanel} inert={mediaOpen} className="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={20} /></button>
+        <div className="gb-detail-layout">
+        {(details.background_image || game.background_image) && <img className="gb-detail-poster" src={details.background_image || game.background_image} alt="" />}
+        <div className="gb-detail-content">
         <div className="modal-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(10,10,16,.96), rgba(10,10,16,.35)), url("${details.background_image || game.background_image || ''}")` }}>
           <div className="modal-hero-content">
             <span className="eyebrow">GAME DETAILS</span>
             <h2 id="modal-title">{game.name}</h2>
             <div className="modal-stats">
-              <span><Star size={15} fill="currentColor" /> {Number(game.rating || 0).toFixed(1)} rating</span>
+              <span><Star size={15} fill="currentColor" /> {game.rating > 0 ? Number(game.rating).toFixed(1) + ' / 5' : 'Not rated'}</span>
               {game.released && <span><CalendarDays size={15} /> {game.released}</span>}
             </div>
           </div>
@@ -132,6 +135,8 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
             <Heart size={17} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Saved to wishlist' : 'Add to wishlist'}
           </button>
           <p className="data-credit">Game information and artwork provided by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>.</p>
+        </div>
+        </div>
         </div>
       </section>
       {viewer && <div className="media-viewer-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setViewer(null) }}>

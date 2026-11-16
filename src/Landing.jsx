@@ -1,49 +1,50 @@
-import { ArrowRight, Compass, GitCompareArrows, Library } from 'lucide-react'
+import { Gamepad2, Layers3, Library } from 'lucide-react'
+import './editorial.css'
 
 const features = [
-  { icon: Compass, title: 'Discover new games', body: 'Filter the IGDB catalog by platform and genre. Dive into trailers, screenshots, and details.', preview: ['Indie gems', 'RPG adventures', 'New releases'] },
-  { icon: GitCompareArrows, title: 'Compare your shortlist', body: 'See up to three games side by side. Check ratings and supported platforms, then find official storefront links.', preview: ['Genres', 'Platforms', 'Release dates'] },
-  { icon: Library, title: 'Build your collection', body: 'Wishlist games for later and track what you’re playing or have completed. Sign in to pick up on another device.', preview: ['Wishlist', 'Playing', 'Completed'] },
+  { icon: Gamepad2, title: 'Discover games', body: 'Browse by genre or platform, then explore screenshots, trailers, and game details.' },
+  { icon: Layers3, title: 'Compare titles', body: 'Put up to three games side by side. Check ratings, release dates, and official storefront links.' },
+  { icon: Library, title: 'Build your collection', body: 'Save games to your Wishlist, track progress in your Library, and sync both with an account.' },
 ]
 
 export default function Landing({ signedIn, catalogPath }) {
-  return <div className="gb-landing">
+  return <div className="gb-landing gb-editorial">
     <a href="#landing-main" className="gb-skip">Skip to content</a>
-    <header className="gb-header gb-container">
-      <a className="gb-brand" href="#/" aria-label="GameBrowzr home"><img src="/gamebrowzr-mark.webp" width="38" height="38" alt="" />Game<span>Browzr</span></a>
+    <header className="gb-container gb-editorial-header">
+      <a className="gb-brand" href="#/" aria-label="GameBrowzr home">
+        <img src="/gamebrowzr-mark.svg" width="36" height="36" alt="" />Game<span>Browzr</span>
+      </a>
       <nav aria-label="Main navigation">
-        <a href={catalogPath}>Explore</a>
-        <a href="#features">How it works</a>
-        <a className="gb-button gb-outline" href={signedIn ? '#/account' : '#/login'}>{signedIn ? 'My account' : 'Log In'}</a>
+        <a className="gb-editorial-guide" href="#features">How it works</a>
+        <a className="gb-editorial-account" href={signedIn ? '#/account' : '#/login'}>
+          {signedIn ? 'My account' : 'Log In'}
+        </a>
       </nav>
     </header>
     <main id="landing-main" tabIndex={-1}>
-      <section className="gb-hero gb-container" aria-labelledby="landing-title">
-        <div className="gb-hero-text">
-          <h1 id="landing-title">Explore<br />Beyond.</h1>
-          <p>Find your next game, compare the contenders, and build a collection worth coming back to.</p>
-          <div className="gb-hero-actions">
-            <a className="gb-button gb-primary" href={catalogPath}>Explore Games <ArrowRight size={18} aria-hidden="true" /></a>
-            {!signedIn && <a className="gb-button gb-outline" href="#/register">Create Account</a>}
-          </div>
-          <small>Browse freely as a guest.</small>
-        </div>
-        <div className="gb-hero-visual" aria-hidden="true">
-          <span className="gb-art-compass">✳</span>
-          <div className="gb-hero-art">
-          <img src="/aurora-portal.webp" alt="" width="1440" height="960" fetchPriority="high" />
+      <section className="gb-editorial-hero" aria-labelledby="landing-title">
+        <picture aria-hidden="true">
+          <img src="/gamebrowzr-landing.webp" alt="" width="1983" height="793" fetchPriority="high" />
+        </picture>
+        <div className="gb-container gb-editorial-stage">
+          <div className="gb-editorial-copy">
+            <h1 id="landing-title">Explore<br />Beyond.</h1>
+            <p>Find your next game. Compare titles and build your collection.</p>
+            <div className="gb-editorial-actions">
+              <a className="gb-editorial-cta" href={catalogPath}>Explore Games</a>
+              {!signedIn && <a className="gb-editorial-secondary" href="#/register">Create Account</a>}
+            </div>
           </div>
         </div>
       </section>
-      <section className="gb-features gb-container" id="features" tabIndex={-1} aria-labelledby="features-title">
-        <h2 id="features-title">How it works</h2>
-        <div className="gb-feature-grid">
-          {features.map(({ icon: Icon, title, body, preview }) => <article key={title}>
-            <Icon size={25} aria-hidden="true" /><h3>{title}</h3><p>{body}</p>
-            <ul aria-label={title}>{preview.map(item => <li key={item}>{item}</li>)}</ul>
+      <section className="gb-container gb-editorial-features" id="features" tabIndex={-1} aria-labelledby="features-title">
+        <h2 id="features-title" className="gb-screen-reader">How it works</h2>
+        <div className="gb-editorial-feature-list">
+          {features.map(({ icon: Icon, title, body }) => <article key={title}>
+            <Icon size={23} aria-hidden="true" />
+            <div><h3>{title}</h3><p>{body}</p></div>
           </article>)}
         </div>
-        <a className="gb-button gb-primary" href={catalogPath}>Explore Games <ArrowRight size={18} aria-hidden="true" /></a>
       </section>
     </main>
     <footer className="gb-container gb-footer"><span>GameBrowzr</span><a href="https://www.igdb.com/">Game data by IGDB</a></footer>

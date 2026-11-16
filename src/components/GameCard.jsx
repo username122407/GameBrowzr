@@ -1,7 +1,7 @@
 import AuroraSelect from './AuroraSelect'
 import { Heart, Star, CalendarDays, GitCompareArrows } from 'lucide-react'
 
-export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare, comparing, libraryStatus, onLibraryStatus, collectionDisabled }) {
+export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare, comparing, libraryStatus, onLibraryStatus, collectionDisabled, layout }) {
   const platforms = (game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
   const image = game.background_image
 
@@ -31,7 +31,7 @@ export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare,
         <button className="game-title" onClick={() => onOpen(game)}>{game.name}</button>
         <div className="game-card-bottom">
           <span className="rating"><Star size={14} fill="currentColor" /> {game.rating ? Number(game.rating).toFixed(1) : "N/A"}</span>
-          <span className="platform-count">{platforms.length || '—'} platforms</span>
+          {layout === 'row' && platforms.length ? <span className="platform-count">{platforms.join(' / ')}</span> : <span className="platform-count">{platforms.length || '—'} platforms</span>}
         </div>
         <div className="card-actions"><AuroraSelect disabled={collectionDisabled} className="card-status-menu" label={`Track ${game.name}`} value={libraryStatus || ''} onChange={value => onLibraryStatus(game, value)} options={[{value:'',label:'Track game'},{value:'playing',label:'Playing'},{value:'completed',label:'Completed'}]} /><button className={comparing ? 'compare-selected' : ''} onClick={() => onCompare(game)} title="Compare game" aria-label={`Compare ${game.name}`}><GitCompareArrows size={15}/></button></div>
       </div>

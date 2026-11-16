@@ -1,4 +1,4 @@
-﻿.gb-account {
+.gb-account {
   min-height: 100svh;
   padding: clamp(24px, 5vw, 72px);
   background: radial-gradient(ellipse at 23% 20%, #432356 0, transparent 54%), #100d18;
@@ -61,4 +61,20 @@
 .gb-account .gb-avatar-options button[aria-pressed=true]{border-color:#eedaff;background:#523269}
 .gb-avatar-picker label{margin-bottom:6px}.gb-avatar-picker small{color:#decbea}
 .gb-avatar-picker input[type=file]{height:auto;max-width:100%;line-height:1.35}
+
+
+.gb-account .gb-account-panel{background:#20162b;border-color:#674e7b;border-radius:14px}
+.gb-account .gb-account-brand{background:linear-gradient(155deg,#342645,#181223 82%)}
+.gb-account .gb-account-primary{background:#dec9ff;color:#211335}
+.gb-account .gb-avatar-picker{background:#191122}
+
+
+.gb-account .gb-access-panel .gb-account-brand{background:linear-gradient(0deg,#100b1af2,transparent 75%),url('/aurora-portal.webp') 63% center/cover}
+.gb-account .gb-access-panel .gb-account-brand{align-content:end;min-height:255px}
+.gb-account .gb-profile-panel .gb-account-brand{background:radial-gradient(circle at 30% 16%,#573a72,#1a1127 62%)}
+
+.gb-account .gb-profile-avatar{padding:clamp(18px,4vw,40px);border-right:1px solid #674e7b;min-width:0}
+.gb-account .gb-profile-avatar .gb-avatar-picker{margin:0}
+.gb-account .gb-profile-avatar .gb-avatar-preview{width:clamp(96px,13vw,165px);height:clamp(96px,13vw,165px);border:2px solid #c9b4f8}
+@media(max-width:720px){.gb-account .gb-profile-avatar{border-right:0;border-bottom:1px solid #674e7b;grid-row:2}}
 

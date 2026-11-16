@@ -98,12 +98,12 @@ export default function AccountPage({ mode, collections, children }) {
 
   return <main className="gb-account" id="main-content">
     <a className="gb-account-back" href="#/discover" onClick={recovery ? finishRecovery : undefined}><ArrowLeft size={17} aria-hidden="true" /> Explore games</a>
-    <div className="gb-account-panel">
-      <aside className="gb-account-brand">
-        <a href="#/" aria-label="GameBrowzr home" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.webp" width="76" height="76" alt="" /></a>
+    <div className={profile ? "gb-account-panel gb-profile-panel" : "gb-account-panel gb-access-panel"}>
+      {profile && user ? <aside className="gb-profile-avatar"><AvatarPicker key={user.id} client={client} user={user} /></aside> : <aside className="gb-account-brand">
+        <a href="#/" aria-label="GameBrowzr home" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="76" height="76" alt="" /></a>
         <strong>Explore<br /> Beyond.</strong>
         <p>Your Wishlist and Library, wherever you play.</p>
-      </aside>
+      </aside>}
       <section className="gb-account-form" aria-labelledby="account-heading">
         <LockKeyhole size={24} aria-hidden="true" />
         <h1 id="account-heading" ref={heading} tabIndex={-1}>{title}</h1>
@@ -128,7 +128,7 @@ export default function AccountPage({ mode, collections, children }) {
         <p role="status" className="gb-account-notice">{notice}</p>
         {mode === 'login' && <div className="gb-account-links"><a href="#/register">Create account</a><a href="#/forgot">Forgot password?</a></div>}
         {(register || forgot) && <a href="#/login">Back to log in</a>}
-        {profile && user && <><AvatarPicker key={user.id} client={client} user={user} />{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
+        {profile && user && <>{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
       </section>
     </div>
   </main>
