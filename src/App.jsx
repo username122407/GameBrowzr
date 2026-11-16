@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Gamepad2, Compass, Flame, Star, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard, CarFront, Crosshair, BrainCircuit, Puzzle, Footprints, Shapes, Joystick, Rocket, Swords, Mountain, } from 'lucide-react'
+import { Gamepad2, Compass, Flame, Star, ArrowRight, Search, Heart, Menu, X, SlidersHorizontal, Sparkles, Library, Monitor, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, GitCompareArrows, Check, Clock3, Trophy, PlayCircle, ArrowUp, XCircle, BarChart3, WandSparkles, Dices, TrendingUp, Keyboard, CarFront, Crosshair, BrainCircuit, Puzzle, Footprints, Shapes, Joystick, Rocket, Swords, Mountain, } from 'lucide-react'
 import { getGames, getSpotlightGames, apiProxyEnabled } from './api/igdb'
+import { spotlightDay, SPOTLIGHT_DAY_MS } from '../lib/spotlightRotation.js'
 import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
 import { useAccount } from './account/AccountProvider.jsx'
@@ -48,7 +49,7 @@ export default function App() {
   const [activeQuickExplore, setActiveQuickExplore] = useState(null)
   const { client, user } = useAccount()
   const collections = useCollections(client, user?.id)
-  const { wishlist, library, toggleWishlist, setLibraryStatus, preferences } = collections
+  const { wishlist, library, toggleWishlist, setLibraryStatus } = collections
   const displayName = collections.profile?.display_name || user?.user_metadata?.display_name || 'Account'
   const collectionDisabled = !collections.canEdit
   const [selectedGame, setSelectedGame] = useState(null)
@@ -109,9 +110,6 @@ export default function App() {
     }
   }, [mobileMenuOpen])
   const [featuredIndex, setFeaturedIndex] = useState(0)
-  const [spotlightPaused, setSpotlightPaused] = useState(false)
-  const [spotlightManualPaused, setSpotlightManualPaused] = useState(false)
-  const [spotlightCycle, setSpotlightCycle] = useState(0)
   const [spotlightCandidates, setSpotlightCandidates] = useState([])
   const [spotlightBroken, setSpotlightBroken] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -167,10 +165,49 @@ export default function App() {
   // Spotlight has its own editorial feed; catalog searches and filters never change it.
   useEffect(() => {
     let cancelled = false
-    getSpotlightGames().then(data => {
-      if (!cancelled) setSpotlightCandidates(data.results || [])
-    }).catch(() => { if (!cancelled) setSpotlightCandidates([]) })
-    return () => { cancelled = true }
+    let timer
+    let loadedDay
+    let pending = false
+
+    async function refresh() {
+      const day = spotlightDay()
+      if (pending || day === loadedDay) return
+      clearTimeout(timer)
+      pending = true
+      let delay = 60_000
+      try {
+        const data = await getSpotlightGames(day)
+        if (cancelled) return
+        if (day === spotlightDay() && data.day === day) {
+          setSpotlightCandidates(data.results)
+          setSpotlightBroken([])
+          setFeaturedIndex(0)
+          loadedDay = day
+          delay = (day + 1) * SPOTLIGHT_DAY_MS - Date.now()
+        } else if (day !== spotlightDay()) {
+          delay = 0
+        }
+      } catch {
+        // Keep the last successful lineup visible during a temporary outage.
+      } finally {
+        pending = false
+        if (!cancelled) timer = setTimeout(refresh, Math.max(0, delay))
+      }
+    }
+
+    function refreshWhenVisible() {
+      if (!document.hidden) refresh()
+    }
+
+    refresh()
+    window.addEventListener('focus', refreshWhenVisible)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+      window.removeEventListener('focus', refreshWhenVisible)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
   }, [])
   useEffect(() => {
     const handler = event => {
@@ -210,8 +247,7 @@ export default function App() {
   const spotlightIds = useMemo(() => new Set(spotlightCandidates.map(game => game.id)), [spotlightCandidates])
   const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
   useEffect(() => { setFeaturedIndex(0) }, [spotlightGames.length])
-  useEffect(() => { if (!preferences.spotlightAutoplay || window.matchMedia('(prefers-reduced-motion: reduce)').matches || spotlightPaused || spotlightManualPaused || spotlightGames.length < 2 || activeTab !== 'discover' || activeQuickExplore) return; const timer = setTimeout(() => { setFeaturedIndex(i => (i + 1) % spotlightGames.length); setSpotlightCycle(i => i + 1) }, 8000); return () => clearTimeout(timer) }, [spotlightPaused, spotlightManualPaused, spotlightGames.length, activeTab, activeQuickExplore, featuredIndex, spotlightCycle, preferences.spotlightAutoplay])
-  const moveSpotlight = step => { if (spotlightGames.length < 2) return; setFeaturedIndex(i => (i + step + spotlightGames.length) % spotlightGames.length); setSpotlightCycle(i => i + 1) }
+  const moveSpotlight = step => { if (spotlightGames.length < 2) return; setFeaturedIndex(i => (i + step + spotlightGames.length) % spotlightGames.length) }
   const genres = catalogGenres
   const libraryEntries = Object.values(library)
   const libraryStats = useMemo(() => {
@@ -372,12 +408,12 @@ export default function App() {
       </header>
       <main id="main-content" className="gb-tab-panel" key={activeQuickExplore || activeTab} tabIndex={-1}>
         {showDiscovery && <div className="gb-discover-search">{filters}</div>}
-        {activeTab === 'discover' && !activeQuickExplore && <div className="gb-discover-feature"><section className="spotlight-area" aria-label="Featured games" onFocus={() => setSpotlightPaused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setSpotlightPaused(false) }} onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={event => { if (!event.currentTarget.contains(document.activeElement)) setSpotlightPaused(false) }}>
+        {activeTab === 'discover' && !activeQuickExplore && <div className="gb-discover-feature"><section className="spotlight-area" aria-label="Featured games">
           <div className="spotlight-main" tabIndex={0} aria-label="Featured games. Use left and right arrow keys to navigate." onKeyDown={event => { if(event.key === 'ArrowLeft'){event.preventDefault();moveSpotlight(-1)} if(event.key === 'ArrowRight'){event.preventDefault();moveSpotlight(1)} }}>
             <div className="spotlight-image-stack" aria-hidden="true">{spotlightGames.map((game, index) => <div key={game.id} className={`spotlight-frame spotlight-layer ${index === featuredIndex ? 'is-active' : ''}`}><img className="spotlight-fill" src={game.spotlight_image} alt="" aria-hidden="true" loading={index < 2 ? 'eager' : 'lazy'} decoding="async"/><img className="spotlight-art" src={game.spotlight_image} alt="" loading={index < 2 ? 'eager' : 'lazy'} decoding="async" onError={() => setSpotlightBroken(current => current.includes(game.id) ? current : [...current, game.id])}/></div>)}</div>
             <div className="spotlight-overlay" aria-hidden="true" />
             <div key={featured?.id || "empty"} className="spotlight-content cinematic-copy"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" disabled={!featured} onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
-            {spotlightGames.length > 1 && <div className="spotlight-navigation" aria-label="Spotlight navigation"><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(-1)} aria-label="Previous featured game"><ChevronLeft size={19}/></button><div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={()=>{setFeaturedIndex(i);setSpotlightCycle(c=>c+1)}} aria-label={`Show ${game.name}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(1)} aria-label="Next featured game"><ChevronRight size={19}/></button><button className="spotlight-nav-button spotlight-pause" type="button" onClick={() => setSpotlightManualPaused(p => !p)} aria-label={spotlightManualPaused ? 'Resume slideshow' : 'Pause slideshow'}>{spotlightManualPaused ? <Play size={17}/> : <Pause size={17}/>}</button></div>}
+            {spotlightGames.length > 1 && <div className="spotlight-navigation" aria-label="Spotlight navigation"><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(-1)} aria-label="Previous featured game"><ChevronLeft size={19}/></button><div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={() => setFeaturedIndex(i)} aria-label={`Show ${game.name}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(1)} aria-label="Next featured game"><ChevronRight size={19}/></button></div>}
           </div>
         </section>
           <aside className="gb-discover-shortcuts" aria-labelledby="discover-shortcut-heading">

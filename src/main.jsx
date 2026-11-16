@@ -65,7 +65,7 @@ function GameBrowzr() {
       : <AccountPage key={mode} mode={mode} />
   }
 
-  return <AuroraBackground landing={landing}>
+  return <AuroraBackground>
     <div className="gb-route-stage" key={landing ? "landing" : recovery ? "reset" : route}>
       <Suspense fallback={<p className="gb-loading" role="status">Loading GameBrowzr…</p>}>
         {screen}

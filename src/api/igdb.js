@@ -18,6 +18,6 @@ export function getGameDetails(id) {
   return request(`/api/games/${encodeURIComponent(id)}`)
 }
 
-export function getSpotlightGames() {
-  return request(`/api/spotlight`)
+export function getSpotlightGames(day) {
+  return request(`/api/spotlight?day=${day}`)
 }

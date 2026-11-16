@@ -72,8 +72,6 @@ body { margin: 0; background: var(--gb-background); color: var(--gb-ink); font-f
 .gb-atmosphere i+i{background:radial-gradient(ellipse at 30% 73%,#5823ad99,transparent 36%);animation:gb-drift 21s ease-in-out infinite alternate-reverse}
 .gb-atmosphere[data-playing=false] i{animation-play-state:paused}
 @keyframes gb-drift{from{transform:translate(-7%,-3%)}to{transform:translate(9%,6%) scale(1.13)}}
-.gb-motion-control{position:fixed;bottom:12px;right:12px;z-index:14;min-height:40px;padding:6px 12px;border:1px solid #805991;border-radius:24px;background:#170e22;color:#f3e0fc;font:inherit;font-size:.75rem;cursor:pointer}
-body:has(.back-top) .gb-motion-control{bottom:70px}
 .gb-landing,.gb-account{position:relative;z-index:1}
 .gb-landing{background:radial-gradient(ellipse at 100% 0%,#630f6175,transparent 42%),linear-gradient(152deg,#030105f1 13%,#08030bc9 73%,#330b48ab);overflow:hidden}
 .gb-header{position:relative;z-index:2;padding-block:clamp(17px,3vw,40px);border:0}
@@ -93,7 +91,7 @@ body:has(.back-top) .gb-motion-control{bottom:70px}
 .gb-avatar svg{width:55%;height:55%}.gb-avatar img{width:100%;height:100%;object-fit:cover}
 .gb-avatar[data-avatar=pilot]{background:#344888}.gb-avatar[data-avatar=specter]{background:#812b71}.gb-avatar[data-avatar=mech]{background:#21606f}.gb-avatar[data-avatar=night]{background:#53447e}.gb-avatar[data-avatar=duelist]{background:#87375c}
 @media(max-width:760px){.gb-hero{grid-template-columns:1fr;min-height:0}.gb-hero-art{min-height:clamp(220px,72vw,470px);border-radius:22% 0 0 18%}.gb-hero-text{text-align:left}.gb-hero p{margin-left:0}.gb-hero-actions{justify-content:flex-start}.gb-header nav a:not(.gb-button){display:none}}
-@media(prefers-reduced-motion:reduce){.gb-atmosphere i{animation:none}.gb-motion-control{display:none}}
+@media(prefers-reduced-motion:reduce){.gb-atmosphere i{animation:none}}
 
 .gb-landing main{overflow:clip}
 @media(max-width:760px){.gb-hero::before{display:none}}
@@ -115,4 +113,23 @@ body:has(.back-top) .gb-motion-control{bottom:70px}
   background:linear-gradient(110deg,#fff4ff 4%,#d7b1f9 54%,#a7a7fa 100%);
   background-clip:text;color:transparent;
  }
+}
+
+/* Aurora scrollbars for the page and nested scrolling regions. */
+:root {
+  --gb-scroll-thumb: #aa83c9;
+  --gb-scroll-track: #20152e;
+}
+:where(html, body *) {
+  scrollbar-color: var(--gb-scroll-thumb) var(--gb-scroll-track);
+}
+.curated-scroll { scrollbar-width: thin; }
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--gb-scroll-track); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--gb-scroll-thumb);
+    border: 2px solid var(--gb-scroll-track);
+    border-radius: 999px;
+  }
 }
