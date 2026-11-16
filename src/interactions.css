@@ -1,0 +1,65 @@
+
+:root{--gb-motion-ease:cubic-bezier(.22,.75,.24,1);--gb-motion-short:145ms}
+@keyframes gb-screen-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes gb-screen-out{to{opacity:0;transform:translateY(-5px)}}
+@keyframes gb-panel-open{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes gb-soft-show{from{opacity:0}to{opacity:1}}
+@keyframes gb-menu-open{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
+
+::view-transition{pointer-events:none}
+:root[data-gb-transition=route]::view-transition-old(root){
+ animation:gb-screen-out 150ms ease-in both;
+}
+:root[data-gb-transition=route]::view-transition-new(root){
+ animation:gb-screen-in 270ms var(--gb-motion-ease) both;
+}
+:root[data-gb-transition=tab] .gb-tab-panel{view-transition-name:gb-catalog-panel}
+:root[data-gb-transition=tab]::view-transition-old(root){display:none}
+:root[data-gb-transition=tab]::view-transition-new(root){animation:none}
+::view-transition-old(gb-catalog-panel){animation:gb-screen-out 140ms ease-in both}
+::view-transition-new(gb-catalog-panel){animation:gb-screen-in 220ms var(--gb-motion-ease) both}
+::view-transition-group(gb-catalog-panel){animation-duration:220ms}
+:root[data-gb-motion-fallback] .gb-route-stage,
+:root[data-gb-motion-fallback] .gb-tab-panel{animation:gb-screen-in 225ms var(--gb-motion-ease) both}
+
+.app-shell .modal-backdrop{animation:gb-soft-show 160ms ease-out both}
+.app-shell .game-modal,.app-shell .media-viewer,
+.app-shell .compare-insights-dialog[open]{
+ animation:gb-panel-open 235ms var(--gb-motion-ease) both;
+}
+.app-shell .compare-insights-dialog[open]::backdrop{animation:gb-soft-show 150ms ease-out both}
+.app-shell :is(.aurora-select-menu,.search-suggestions){transform-origin:top;animation:gb-menu-open 165ms var(--gb-motion-ease) both}
+.app-shell .compare-tray{animation:gb-soft-show 160ms ease-out both}
+.app-shell .gb-modal-loading,.gb-account .gb-security details[open] form{
+ animation:gb-screen-in 180ms var(--gb-motion-ease) both;
+}
+.gb-desktop-nav>button{position:relative;transition:color var(--gb-motion-short) ease,background-color var(--gb-motion-short) ease}
+.gb-atlas .gb-desktop-nav>button[aria-current=page]{border-bottom-color:transparent}
+.gb-desktop-nav>button::after{
+ content:'';position:absolute;inset:auto 8px -3px;height:3px;background:#d4b5fa;border-radius:5px 5px 0 0;
+ opacity:0;transform:scaleX(.5);transition:transform 180ms var(--gb-motion-ease),opacity var(--gb-motion-short) ease;
+}
+.gb-desktop-nav>button[aria-current=page]::after{opacity:1;transform:scaleX(1)}
+.app-shell .studio-link{transition:background-color var(--gb-motion-short) ease,color var(--gb-motion-short) ease,box-shadow 180ms ease}
+.app-shell :is(.cover-button,.save-button,.card-actions>button,.aurora-select-trigger,.spotlight-nav-button,.compare-open,.compare-clear,.insights-details,.gb-rail-surprise,.gb-catalog-account),
+.gb-editorial :is(.gb-editorial-cta,.gb-editorial-secondary,.gb-editorial-account),
+.gb-account :is(.gb-account-primary,.gb-account-secondary,.gb-avatar-upload,.gb-avatar-options button,.gb-password-field button){
+ transition-property:scale,background-color,border-color,box-shadow;
+ transition-duration:var(--gb-motion-short);
+ transition-timing-function:var(--gb-motion-ease);
+}
+.app-shell :is(.cover-button,.save-button,.card-actions>button,.aurora-select-trigger,.spotlight-nav-button,.compare-open,.compare-clear,.insights-details,.gb-rail-surprise,.gb-catalog-account):active:not(:disabled),
+.gb-editorial :is(.gb-editorial-cta,.gb-editorial-secondary,.gb-editorial-account):active,
+.gb-account :is(.gb-account-primary,.gb-account-secondary,.gb-avatar-upload,.gb-avatar-options button,.gb-password-field button):active:not(:disabled){scale:.97}
+@keyframes gb-save-feedback{0%{scale:.85}65%{scale:1.16}100%{scale:1}}
+.app-shell .save-button.is-saved svg{animation:gb-save-feedback 210ms var(--gb-motion-ease) both}
+.gb-account .gb-avatar-options button[aria-pressed=true] .gb-avatar{transition:outline-color var(--gb-motion-short) ease}
+@media(prefers-reduced-motion:reduce){
+ ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+ :root[data-gb-motion-fallback] .gb-route-stage,:root[data-gb-motion-fallback] .gb-tab-panel,
+ .app-shell :is(.modal-backdrop,.game-modal,.media-viewer,.compare-insights-dialog[open],.aurora-select-menu,.search-suggestions,.compare-tray,.gb-modal-loading,.save-button.is-saved svg),
+ .app-shell .compare-insights-dialog[open]::backdrop,.gb-account .gb-security details[open] form{animation:none!important}
+ :is(.app-shell,.gb-editorial,.gb-account) :is(button,a){transition:none!important}
+ :is(.app-shell,.gb-editorial,.gb-account) :is(button,a):active{scale:1}
+ .gb-desktop-nav>button::after{transition:none}
+}

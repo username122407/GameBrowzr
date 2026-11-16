@@ -7,8 +7,10 @@ import { useAccount } from './account/AccountProvider.jsx'
 import { useCollections } from './collections/useCollections.js'
 import { Avatar } from './account/Avatar.jsx'
 import './styles.css'
+import { swapView } from './utils/viewMotion.js'
 
-const GameModal = lazy(() => import('./components/GameModal'))
+const loadGameModal = () => import('./components/GameModal')
+const GameModal = lazy(loadGameModal)
 import AuroraSelect from './components/AuroraSelect'
 import CompareInsights from './components/CompareInsights'
 import { pickSurpriseGame } from './utils/surpriseDiscovery'
@@ -284,17 +286,19 @@ export default function App() {
       scrollPageToTop()
       return
     }
-    scrollPageToTop()
-    setActiveQuickExplore(null)
-    setCategoryGenre(null)
-    setActiveTab(tab)
-    setQuery('')
-    setDebouncedQuery('')
-    setShowSuggestions(false)
-    setMobileMenuOpen(false)
-    setActivePlatform('All platforms')
-    setActiveGenre('All genres')
-    if (tab === 'discover') loadGames({ ordering: sort })
+    swapView('tab', () => {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      setActiveQuickExplore(null)
+      setCategoryGenre(null)
+      setActiveTab(tab)
+      setQuery('')
+      setDebouncedQuery('')
+      setShowSuggestions(false)
+      setMobileMenuOpen(false)
+      setActivePlatform('All platforms')
+      setActiveGenre('All genres')
+      if (tab === 'discover') loadGames({ ordering: sort })
+    })
   }
 
   const chooseQuickExplore = ({ label, ordering, genre }) => {
@@ -303,19 +307,21 @@ export default function App() {
       scrollPageToTop()
       return
     }
-    scrollPageToTop()
-    const nextSort = ordering || '-rating'
-    const nextGenre = genre || 'All genres'
-    setActiveQuickExplore(label)
-    setCategoryGenre(genre || null)
-    setActiveTab('discover')
-    setMobileMenuOpen(false)
-    setQuery('')
-    setDebouncedQuery('')
-    setActivePlatform('All platforms')
-    setActiveGenre(nextGenre)
-    setSort(nextSort)
-    loadGames({ searchText: '', ordering: nextSort, platform: 'All platforms', genre: nextGenre })
+    swapView('tab', () => {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      const nextSort = ordering || '-rating'
+      const nextGenre = genre || 'All genres'
+      setActiveQuickExplore(label)
+      setCategoryGenre(genre || null)
+      setActiveTab('discover')
+      setMobileMenuOpen(false)
+      setQuery('')
+      setDebouncedQuery('')
+      setActivePlatform('All platforms')
+      setActiveGenre(nextGenre)
+      setSort(nextSort)
+      loadGames({ searchText: '', ordering: nextSort, platform: 'All platforms', genre: nextGenre })
+    })
   }
 
   const showDiscovery = activeTab === 'discover' && !activeQuickExplore
@@ -338,7 +344,7 @@ export default function App() {
       <button type="button" className={`mobile-drawer-backdrop ${mobileMenuOpen ? 'is-visible' : ''}`} aria-label="Close navigation" aria-hidden={!mobileMenuOpen} tabIndex={mobileMenuOpen ? 0 : -1} onClick={closeMobileMenu}/>
       <aside id="mobile-navigation" onTouchStart={onDrawerTouchStart} onTouchMove={onDrawerTouchMove} onTouchEnd={onDrawerTouchEnd} style={mobileMenuOpen && drawerDrag ? { '--drawer-drag': `${drawerDrag}px` } : undefined} className={`studio-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <button type="button" className="mobile-drawer-close" onClick={closeMobileMenu} aria-label="Close menu"><X size={20}/></button>
-        <a className="studio-brand" href="#/"><img src="/gamebrowzr-mark.svg" alt="GameBrowzr emblem"/><span>GAME<span>BROWZR</span><small>EXPLORE BEYOND</small></span></a>
+        <a className="studio-brand" href="#/"><img src="/gamebrowzr-mark.svg" alt=""/><span><span className="gb-wordmark">GAMEBROWZR</span><small>EXPLORE BEYOND</small></span></a>
         <div className="sidebar-label">EXPLORE</div>
         <nav className="studio-nav" aria-label="Main navigation">
           <button className={activeTab === 'discover' && !activeQuickExplore ? 'studio-link active' : 'studio-link'} onClick={() => chooseTab('discover')}><Compass size={18}/> Discover</button>
@@ -355,7 +361,7 @@ export default function App() {
       <div className="studio-workspace" data-current-page={activeQuickExplore || activeTab}>
       <header className="studio-topbar">
         <button className="mobile-menu-button" onClick={() => mobileMenuOpen ? closeMobileMenu() : openMobileMenu()} aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
-        <a className="gb-desktop-brand" href="#/" aria-label="GameBrowzr home"><img src="/gamebrowzr-mark.svg" width="38" height="38" alt="" /> GameBrowzr</a>
+        <a className="gb-desktop-brand" href="#/" aria-label="GameBrowzr home"><img src="/gamebrowzr-mark.svg" width="38" height="38" alt="" /><span className="gb-wordmark">GameBrowzr</span></a>
         <nav className="gb-desktop-nav" aria-label="Catalog navigation">
           {[['discover', 'Discover'], ['wishlist', 'Wishlist'], ['library', 'Library']].map(([id, label]) =>
             <button key={id} type="button" aria-current={activeTab === id ? 'page' : undefined} onClick={() => chooseTab(id)}>{label}</button>
@@ -364,7 +370,7 @@ export default function App() {
         <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
         <div className="studio-top-actions"><a className="gb-catalog-account" href={user ? "#/account" : "#/login"}>{user && <Avatar client={client} user={user} />}<span className="gb-account-link-name">{user ? displayName : "Log In"}</span></a><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{loading ? 'Loading catalog…' : usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" className="gb-tab-panel" key={activeQuickExplore || activeTab} tabIndex={-1}>
         {showDiscovery && <div className="gb-discover-search">{filters}</div>}
         {activeTab === 'discover' && !activeQuickExplore && <div className="gb-discover-feature"><section className="spotlight-area" aria-label="Featured games" onFocus={() => setSpotlightPaused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setSpotlightPaused(false) }} onMouseEnter={() => setSpotlightPaused(true)} onMouseLeave={event => { if (!event.currentTarget.contains(document.activeElement)) setSpotlightPaused(false) }}>
           <div className="spotlight-main" tabIndex={0} aria-label="Featured games. Use left and right arrow keys to navigate." onKeyDown={event => { if(event.key === 'ArrowLeft'){event.preventDefault();moveSpotlight(-1)} if(event.key === 'ArrowRight'){event.preventDefault();moveSpotlight(1)} }}>
@@ -421,7 +427,7 @@ export default function App() {
       </div>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#"><img src="/gamebrowzr-mark.svg" alt="" width="28" height="28" /> GAMEBROWZR</a>
+        <a className="footer-brand" href="#"><img src="/gamebrowzr-mark.svg" alt="" width="28" height="28" /><span className="gb-wordmark">GAMEBROWZR</span></a>
         <p>Discover more. Play more. Find your next favorite.</p>
         <p className="footer-credit">Game data and images powered by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>. Store links open official storefront search pages. Availability and prices may vary.</p>
         <span className="copyright">© {new Date().getFullYear()} GameBrowzr · Student capstone project</span>

@@ -144,3 +144,5 @@
 .gb-account .gb-account-panel{background:#191227;border-color:#836b9e}
 .gb-account .gb-account-primary{background:linear-gradient(135deg,#ead8ff,#c4a5ed);color:#231337}
 @media(max-width:720px){.gb-account .gb-access-panel .gb-account-brand{background-position:64% 56%}}
+
+.gb-account .gb-account-topbar{background:linear-gradient(104deg,#171025 0%,#211630 54%,#2c1b37 100%)}

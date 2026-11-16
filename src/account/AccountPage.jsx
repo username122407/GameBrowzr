@@ -101,7 +101,7 @@ export default function AccountPage({ mode, collections, children }) {
 
   return <main className="gb-account" id="main-content">
     <header className="gb-account-topbar">
-      <a className="gb-brand" href="#/" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="32" height="32" alt="" />GameBrowzr</a>
+      <a className="gb-brand" href="#/" onClick={recovery ? finishRecovery : undefined}><img src="/gamebrowzr-mark.svg" width="32" height="32" alt="" /><span className="gb-wordmark">GameBrowzr</span></a>
       <a className="gb-account-back" href="#/discover" onClick={recovery ? finishRecovery : undefined}><ArrowLeft size={17} aria-hidden="true" /> Explore games</a>
     </header>
     <div className={profile ? "gb-account-panel gb-profile-panel" : "gb-account-panel gb-access-panel"}>

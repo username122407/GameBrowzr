@@ -7,7 +7,7 @@ export function useBackgroundMotion() {
   return useContext(BackgroundMotion)
 }
 
-export default function AuroraBackground({ children }) {
+export default function AuroraBackground({ children, landing }) {
   const [reduce, setReduce] = useState(() => window.matchMedia(reducedMotion).matches)
   const [playing, setPlaying] = useState(() => {
     try { return localStorage.getItem('gamebrowzr-background-motion') !== 'off' } catch { return true }
@@ -27,10 +27,10 @@ export default function AuroraBackground({ children }) {
     try { localStorage.setItem('gamebrowzr-background-motion', next ? 'on' : 'off') } catch { /* Apply for this visit. */ }
   }
 
-  const motion = playing && !reduce
+  const motion = !reduce && (landing || playing)
   return <BackgroundMotion.Provider value={motion}>
     <div className="gb-atmosphere" data-playing={motion} aria-hidden="true"><i /><i /></div>
-    {!reduce && <button className="gb-motion-control" type="button" onClick={toggle}>{playing ? 'Pause background' : 'Play background'}</button>}
+    {!landing && !reduce && <button className="gb-motion-control" type="button" onClick={toggle}>{playing ? 'Pause background' : 'Play background'}</button>}
     {children}
   </BackgroundMotion.Provider>
 }

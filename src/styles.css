@@ -690,3 +690,6 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 .gb-atlas .studio-topbar{background:linear-gradient(105deg,#1e1630fa,#171124f7 62%,#26172cf7)}
 .gb-atlas .gb-discover-shortcuts{background:linear-gradient(145deg,#2d1e43,#1c142d 72%,#2b1a35)}
 .gb-atlas .studio-workspace .curated-card,.gb-atlas .studio-workspace .game-card{background:linear-gradient(155deg,#251b37,#1c152c);border-color:#745a8c}
+
+.gb-atlas .studio-topbar{background:linear-gradient(104deg,#171025 0%,#211630 54%,#2c1b37 100%)}
+.gb-atlas .site-footer{background:linear-gradient(110deg,#151023,#221831 65%,#2a1a32)}

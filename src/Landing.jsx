@@ -21,7 +21,6 @@ function NebulaBackground() {
       return
     }
     // Keep the poster available when autoplay is blocked or the video is still loading.
-    if (!element.getAttribute('src')) element.src = '/gamebrowzr-nebula.mp4'
     element.muted = true
     void element.play().catch(() => {})
     return () => element.pause()
@@ -29,7 +28,7 @@ function NebulaBackground() {
 
   return <div className="gb-editorial-media" aria-hidden="true">
     <img src="/gamebrowzr-nebula-poster.webp" alt="" width="1280" height="720" fetchPriority="high" />
-    <video ref={video} muted playsInline loop preload="none" poster="/gamebrowzr-nebula-poster.webp" />
+    <video ref={video} src={motion ? "/gamebrowzr-nebula.mp4" : undefined} autoPlay={motion} muted playsInline loop preload={motion ? "metadata" : "none"} poster="/gamebrowzr-nebula-poster.webp" />
   </div>
 }
 
@@ -52,16 +51,18 @@ export default function Landing({ user, client, catalogPath }) {
 
   return <div className="gb-landing gb-editorial">
     <a href="#landing-main" className="gb-skip">Skip to content</a>
-    <header className="gb-container gb-editorial-header">
-      <a className="gb-brand" href="#/" aria-label="GameBrowzr home">
-        <img src="/gamebrowzr-mark.svg" width="36" height="36" alt="" />Game<span>Browzr</span>
-      </a>
-      <nav aria-label="Main navigation">
-        <a className="gb-editorial-guide" href="#features">How it works</a>
-        <a className="gb-editorial-account" href={user ? '#/account' : '#/login'}>
-          {user ? displayName : 'Log In'}
+    <header className="gb-editorial-masthead">
+      <div className="gb-container gb-editorial-header">
+        <a className="gb-brand" href="#/" aria-label="GameBrowzr home">
+          <img src="/gamebrowzr-mark.svg" width="36" height="36" alt="" /><span className="gb-wordmark">GameBrowzr</span>
         </a>
-      </nav>
+        <nav aria-label="Main navigation">
+          <a className="gb-editorial-guide" href="#features">How it works</a>
+          <a className="gb-editorial-account" href={user ? '#/account' : '#/login'}>
+            {user ? displayName : 'Log In'}
+          </a>
+        </nav>
+      </div>
     </header>
     <main id="landing-main" tabIndex={-1}>
       <section className="gb-editorial-hero" aria-labelledby="landing-title">
@@ -87,6 +88,6 @@ export default function Landing({ user, client, catalogPath }) {
         </div>
       </section>
     </main>
-    <footer className="gb-container gb-footer"><span>GameBrowzr</span><a href="https://www.igdb.com/">Game data by IGDB</a></footer>
+    <footer className="gb-container gb-footer"><a className="gb-brand" href="#/"><img src="/gamebrowzr-mark.svg" width="28" height="28" alt="" /><span className="gb-wordmark">GameBrowzr</span></a><a href="https://www.igdb.com/">Game data by IGDB</a></footer>
   </div>
 }

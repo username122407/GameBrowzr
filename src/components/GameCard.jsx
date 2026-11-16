@@ -1,16 +1,16 @@
 import AuroraSelect from './AuroraSelect'
 import { Heart, Star, CalendarDays, GitCompareArrows } from 'lucide-react'
 
-export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare, comparing, libraryStatus, onLibraryStatus, collectionDisabled, layout }) {
+export default function GameCard({ game, saved, onToggleSave, onOpen, onCompare, comparing, libraryStatus, onLibraryStatus, collectionDisabled, layout, onPreview }) {
   const platforms = (game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
   const image = game.background_image
 
   return (
     <article className="game-card cinematic-card">
-      <button className="cover-button" onClick={() => onOpen(game)} aria-label={`View ${game.name} details`}>
+      <button className="cover-button" onPointerEnter={() => { void onPreview?.().catch(() => {}) }} onFocus={() => { void onPreview?.().catch(() => {}) }} onClick={() => onOpen(game)} aria-label={`View ${game.name} details`}>
         {image
           ? <img className="game-cover" src={image} alt={`${game.name} artwork`} loading="lazy" />
-          : <div className="cover-placeholder"><span>GAMEBROWZR</span><strong>{game.name}</strong></div>}
+          : <div className="cover-placeholder"><span className="gb-wordmark">GAMEBROWZR</span><strong>{game.name}</strong></div>}
         <span className="cover-shade" />
         <span className="cover-open">View details</span>
       </button>

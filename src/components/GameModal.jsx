@@ -1,7 +1,8 @@
 import AuroraSelect from './AuroraSelect'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search, GitCompareArrows } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
+import { prefersReducedMotion } from '../utils/viewMotion.js'
 
 const storeSearch = {
   PC: [
@@ -21,8 +22,24 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   const [loading, setLoading] = useState(false)
   const [viewer, setViewer] = useState(null)
   const detailsPanel = useRef(null)
+  const closing = useRef(false)
   const mediaPanel = useRef(null)
   const mediaOpen = Boolean(viewer)
+
+  const dismiss = useCallback(() => {
+    if (closing.current) return
+    const panel = detailsPanel.current
+    if (!panel?.animate || prefersReducedMotion()) {
+      onClose()
+      return
+    }
+    closing.current = true
+    const transition = panel.animate(
+      [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px) scale(.985)' }],
+      { duration: 140, easing: 'ease-in', fill: 'forwards' },
+    )
+    void transition.finished.then(onClose, onClose)
+  }, [onClose])
 
   useEffect(() => {
     let active = true
@@ -61,14 +78,14 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   }, [mediaOpen])
 
   useEffect(() => {
-    const onKey = event => { if (event.key === 'Escape') { if (viewer) setViewer(null); else onClose() } }
+    const onKey = event => { if (event.key === 'Escape') { if (viewer) setViewer(null); else dismiss() } }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [onClose, viewer])
+  }, [dismiss, viewer])
 
   const platforms = (details.parent_platforms || game.parent_platforms || []).map(item => item.platform?.name).filter(Boolean)
   const directStores = Array.isArray(details.storeLinks) ? details.storeLinks : []
@@ -87,9 +104,9 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   const videos = (details.videos || []).filter(video => youtubeId(video.id))
 
   return (
-    <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
+    <div className="modal-backdrop" onMouseDown={event => event.target === event.currentTarget && dismiss()}>
       <section ref={detailsPanel} inert={mediaOpen} className="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={20} /></button>
+        <button className="modal-close" onClick={dismiss} aria-label="Close details"><X size={20} /></button>
         <div className="gb-detail-layout">
         {(details.background_image || game.background_image) && <img className="gb-detail-poster" src={details.background_image || game.background_image} alt="" />}
         <div className="gb-detail-content">

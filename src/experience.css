@@ -107,3 +107,12 @@ body:has(.back-top) .gb-motion-control{bottom:70px}
 .gb-avatar[data-avatar=specter]{background:#812b71 url('/gamebrowzr-avatars.webp') 100% 100%/300% 200% no-repeat}
 .gb-avatar[data-avatar=upload]{background:#291e3a;color:#cbb7ec;background-image:none}
 .gb-avatar[data-avatar=upload] img{background:#291e3a}
+
+/* Shared nebula wordmark, with a solid fallback for older browsers. */
+.gb-wordmark{color:#e8ccff;font-weight:850}
+@supports (background-clip:text) {
+ .gb-brand .gb-wordmark,.gb-wordmark,.studio-brand span .gb-wordmark,.cover-placeholder .gb-wordmark{
+  background:linear-gradient(110deg,#fff4ff 4%,#d7b1f9 54%,#a7a7fa 100%);
+  background-clip:text;color:transparent;
+ }
+}
