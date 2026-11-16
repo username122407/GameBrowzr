@@ -215,8 +215,9 @@ export default function App() {
   }
   const suggestions = useMemo(() => {
     const text = query.trim().toLowerCase()
-    return text.length > 1 ? games.filter(game => game.name.toLowerCase().includes(text)).slice(0,5) : []
-  }, [query, games])
+    const source = activeTab === 'wishlist' ? wishlist : activeTab === 'library' ? Object.values(library).map(entry => entry.game) : games
+    return text.length > 1 ? source.filter(game => game.name.toLowerCase().includes(text)).slice(0,5) : []
+  }, [query, games, activeTab, wishlist, library])
   const visibleGames = useMemo(() => {
     if (activeTab === 'discover') return games
     let result = activeTab === 'library' ? Object.values(library).filter(entry => libraryFilter === 'all' || entry.status === libraryFilter).map(entry => entry.game) : [...wishlist]
@@ -225,9 +226,10 @@ export default function App() {
       return name === activePlatform.toLowerCase()
     }))
     if (activeGenre !== 'All genres') result = result.filter(game => game.genres?.some(genre => genre.name === activeGenre))
+    if (query.trim()) result = result.filter(game => game.name.toLowerCase().includes(query.trim().toLowerCase()))
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name))
     return result
-  }, [games, wishlist, library, libraryFilter, activeTab, activePlatform, activeGenre, sort])
+  }, [games, wishlist, library, libraryFilter, activeTab, activePlatform, activeGenre, sort, query])
 
   const setLibraryStatus = (game, status) => {
     setLibrary(current => {
@@ -244,9 +246,12 @@ export default function App() {
   const isSaved = game => wishlist.some(item => item.id === game.id)
   const submitSearch = event => {
     event.preventDefault()
-    setActiveQuickExplore(null)
-    setActiveTab('discover')
-    refreshGames(query, sort)
+    setShowSuggestions(false)
+    if (activeTab === 'discover') {
+      setActiveQuickExplore(null)
+      loadGames({ searchText: query.trim(), ordering: sort, platform: activePlatform, genre: activeGenre })
+    }
+    // Wishlist and Library search is local: stay on the current tab.
   }
   const scrollPageToTop = () => {
     window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
@@ -260,6 +265,9 @@ export default function App() {
     scrollPageToTop()
     setActiveQuickExplore(null)
     setActiveTab(tab)
+    setQuery('')
+    setDebouncedQuery('')
+    setShowSuggestions(false)
     setMobileMenuOpen(false)
     setActivePlatform('All platforms')
     setActiveGenre('All genres')
@@ -337,7 +345,7 @@ export default function App() {
           <div className="curated-head"><div><span className="eyebrow"><WandSparkles size={14}/> SMART DISCOVERY</span><h2>Picked for your taste <span className="heading-dot">.</span></h2><p>Recommendations based on your saved games and favorite genres, refreshed as you explore.</p></div><button className="surprise-button" onClick={surpriseMe}><Dices size={17}/> Surprise me</button></div>
           <div className="curated-scroll">{recommendations.slice(0,6).map(game => <button className="curated-card" key={game.id} onClick={() => setSelectedGame(game)}><img src={game.background_image} alt="" loading="lazy"/><span>{game.name}</span><small>{game.genres?.slice(0,2).map(g=>g.name).join(' · ') || 'Discover'}</small></button>)}</div>
         </section>}
-        {activeTab === 'library' && <section className="insights-panel"><div className="insights-title"><BarChart3 size={21}/><div><h2>Your gaming snapshot</h2><p>Insights from the games you've saved on this device.</p></div></div><div className="insight-grid"><div><span>Total tracked</span><strong>{libraryEntries.length}</strong></div><div><span>Completed</span><strong>{libraryEntries.filter(e=>e.status==='completed').length}</strong></div><div><span>Completion rate</span><strong>{libraryEntries.length ? Math.round(libraryEntries.filter(e=>e.status==='completed').length / libraryEntries.length * 100) : 0}%</strong></div><div><span>Favorite genre</span><strong className="insight-genre">{libraryStats.topGenre || 'Explore games'}</strong></div></div><div className="insights-bars">{Object.entries(libraryStats.genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,count])=><div className="insights-bar" key={name}><span>{name}</span><div><i style={{width:`${Math.max(8,count/Math.max(1,libraryEntries.length)*100)}%`}}/></div><b>{count}</b></div>)}</div></section>}
+        {activeTab === 'library' && <section className="insights-panel"><div className="insights-title"><BarChart3 size={21}/><div><h2>Your gaming snapshot</h2><p>Insights from the games you've saved on this device.</p></div></div><div className="insight-grid"><div><span>Total tracked</span><strong>{libraryEntries.length}</strong></div><div><span>Completed</span><strong>{libraryEntries.filter(e=>e.status==='completed').length}</strong></div><div><span>Completion rate</span><strong>{libraryEntries.length ? Math.round(libraryEntries.filter(e=>e.status==='completed').length / libraryEntries.length * 100) : 0}%</strong></div><div><span>Favorite genre</span><strong className="insight-genre">{libraryStats.topGenre || 'Explore games'}</strong></div></div><div className="insights-chart-heading"><span>Most played genres in your library</span><small>Games tagged with each genre · a game can have multiple genres</small></div><div className="insights-bars">{Object.entries(libraryStats.genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,count])=><div className="insights-bar" key={name}><span>{name}</span><div><i style={{width:`${Math.min(100,count/Math.max(1,libraryEntries.length)*100)}%`}}/></div><b title={`${count} of ${libraryEntries.length} tracked games`}>{count} / {libraryEntries.length}</b></div>)}</div></section>}
         <section className="catalog-section">
           {!(activeTab === 'discover' && activeQuickExplore) && <div className="section-topline">
             <div>
@@ -349,7 +357,7 @@ export default function App() {
           </div>}
 
           <div className="filter-bar">
-            {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{setActiveQuickExplore(null);setQuery(event.target.value);setShowSuggestions(true)}} placeholder="Search games, worlds, and adventures..." aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');setDebouncedQuery('');setShowSuggestions(false);if(activeTab === 'discover') loadGames({ searchText:'', ordering:sort, platform:activePlatform, genre:activeGenre })}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}</section>}
+            {!(activeTab === 'discover' && activeQuickExplore) && <section className="studio-search"><form className="search-form" onSubmit={e => {setShowSuggestions(false); submitSearch(e)}}><Search size={19}/><input value={query} onFocus={() => setShowSuggestions(true)} onChange={event=>{if(activeTab === 'discover') setActiveQuickExplore(null);setQuery(event.target.value);setShowSuggestions(true)}} placeholder={activeTab === 'wishlist' ? 'Search your wishlist...' : activeTab === 'library' ? 'Search your library...' : 'Search games, worlds, and adventures...'} aria-label="Search games" autoComplete="off"/>{query && <button type="button" className="clear-search" onClick={()=>{setQuery('');setDebouncedQuery('');setShowSuggestions(false);if(activeTab === 'discover') loadGames({ searchText:'', ordering:sort, platform:activePlatform, genre:activeGenre })}} aria-label="Clear search"><X size={16}/></button>}<button className="search-submit" type="submit">Search <ArrowRight size={15}/></button></form>{showSuggestions && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label="Game suggestions">{suggestions.map(game => <button key={game.id} role="option" aria-selected="false" onClick={() => {setSelectedGame(game);setShowSuggestions(false)}}><Search size={14}/><span>{game.name}</span><ArrowRight size={14}/></button>)}</div>}</section>}
             <div className="filter-controls">
             <div className="filter-label"><SlidersHorizontal size={16} /> FILTER BY</div>
             <AuroraSelect className="platform-menu" label="Filter by platform" icon={Monitor} value={activePlatform} options={platformFilters} onChange={value => { setActivePlatform(value); if (activeTab === 'discover') loadGames({ searchText: activeQuickExplore ? '' : query, ordering: sort, platform: value, genre: activeGenre }) }} />
@@ -364,12 +372,12 @@ export default function App() {
           {usingDemo && <div className="demo-notice"><span className="notice-dot" /><div><strong>Preview data is active.</strong> Configure your Twitch application credentials in Vercel to load the live game catalog. <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noreferrer">Create API credentials ↗</a></div></div>}
           {error && <div className="error-notice">{error}</div>}
 
-          {loading ? <div className="skeleton-grid" aria-label="Loading games" aria-busy="true">{Array.from({length:12},(_,i)=><div className="skeleton-card" key={i}><div/><span/><span/></div>)}</div> : visibleGames.length ? (
+          {loading && activeTab === 'discover' ? <div className="skeleton-grid" aria-label="Loading games" aria-busy="true">{Array.from({length:12},(_,i)=><div className="skeleton-card" key={i}><div/><span/><span/></div>)}</div> : visibleGames.length ? (
             <div className="game-grid">
               {visibleGames.slice(0,visibleCount).map(game => <GameCard key={game.id} game={game} saved={isSaved(game)} onToggleSave={toggleWishlist} onOpen={setSelectedGame} onCompare={toggleCompare} comparing={compare.some(item => item.id === game.id)} libraryStatus={library[game.id]?.status || ""} onLibraryStatus={setLibraryStatus} />)}
             </div>
           ) : (
-            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{activeTab === 'wishlist' ? 'Your wishlist is empty' : activeTab === 'library' ? 'Your library is empty' : 'No games found'}</h3><p>{activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : activeTab === 'library' ? 'Mark games as Playing or Completed.' : 'Try another search or adjust your filters.'}</p><button className="secondary-button" onClick={() => { setActiveQuickExplore(null); setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button></div>
+            <div className="empty-state"><div className="empty-icon">{activeTab === 'wishlist' ? <Heart size={28} /> : <Search size={28} />}</div><h3>{query.trim() && activeTab !== 'discover' ? 'No matching saved games' : activeTab === 'wishlist' ? 'Your wishlist is empty' : activeTab === 'library' ? 'Your library is empty' : 'No games found'}</h3><p>{query.trim() && activeTab !== 'discover' ? 'Try another name or clear your search to see your saved games.' : activeTab === 'wishlist' ? 'Save games you like and they will appear here.' : activeTab === 'library' ? 'Mark games as Playing or Completed.' : 'Try another search or adjust your filters.'}</p>{query.trim() && activeTab !== 'discover' ? <button className="secondary-button" onClick={() => { setQuery(''); setDebouncedQuery(''); setShowSuggestions(false) }}>Clear search</button> : <button className="secondary-button" onClick={() => { setActiveQuickExplore(null); setActivePlatform('All platforms'); setActiveGenre('All genres'); setQuery(''); refreshGames('', sort, 'All platforms', 'All genres') }}>Explore games</button>}</div>
           )}
           {activeTab === 'discover' && !usingDemo && (hasMore || visibleCount < games.length) && !loading && <div className="render-more" ref={loadMoreRef} aria-live="polite"><p>{loadingMore ? 'Loading more discoveries…' : `Showing ${Math.min(visibleCount, games.length)} of ${games.length} loaded games · Scroll for more`}</p></div>}
         </section>
