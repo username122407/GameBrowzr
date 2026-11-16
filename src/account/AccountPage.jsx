@@ -1,6 +1,7 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, LockKeyhole } from 'lucide-react'
 import { authRedirect, useAccount } from './AccountProvider.jsx'
+import AvatarPicker from './Avatar.jsx'
 import './account.css'
 
 const titles = {
@@ -127,7 +128,7 @@ export default function AccountPage({ mode, collections, children }) {
         <p role="status" className="gb-account-notice">{notice}</p>
         {mode === 'login' && <div className="gb-account-links"><a href="#/register">Create account</a><a href="#/forgot">Forgot password?</a></div>}
         {(register || forgot) && <a href="#/login">Back to log in</a>}
-        {profile && user && <>{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
+        {profile && user && <><AvatarPicker key={user.id} client={client} user={user} />{children}<button type="button" className="gb-account-secondary" disabled={busy} onClick={logout}>Log out</button></>}
       </section>
     </div>
   </main>

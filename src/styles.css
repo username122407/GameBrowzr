@@ -457,3 +457,18 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 @media(max-width:1100px){.gb-discover-feature{grid-template-columns:minmax(0,1fr)}.gb-discover-shortcuts{display:flex;flex-wrap:wrap;align-items:center}.gb-discover-shortcuts h2{width:100%}}
 @media(max-width:500px){.gb-discover-shortcuts :is(button,a){flex:1 1 135px}.gb-discover-feature .spotlight-main{min-height:305px}}
 @media(prefers-reduced-motion:reduce){.gb-discover-shortcuts :is(button,a){transition:none}}
+
+/* Rounded console surfaces */
+.app-shell{position:relative;background:radial-gradient(ellipse at 75% 0%,#432052bc 0,transparent 56%),#190f24dc}
+.studio-sidebar{background:linear-gradient(170deg,#1e112a,#120a1b 75%);border-color:#4d2f60}
+.studio-topbar{background:#21132edb;border-color:#563761}
+.studio-workspace .gb-discover-heading{padding-block:22px 14px}
+.studio-workspace .gb-discover-heading h1{font-size:clamp(25px,3vw,43px)}
+.gb-discover-feature .spotlight-main{border-radius:24px;background:linear-gradient(135deg,#6d4186,#2c1740 65%)}
+.gb-discover-shortcuts{background:linear-gradient(158deg,#4b285c,#241432 76%);border-radius:22px}
+.studio-workspace .curated-card{background:#291735;border-color:#68447b}
+.studio-workspace .game-card{background:linear-gradient(155deg,#352144,#20142b 75%)}
+.gb-catalog-account{gap:7px}
+@media(min-width:1101px){.gb-discover-feature{grid-template-columns:minmax(0,2.75fr) minmax(230px,1fr)}}
+@media(max-width:420px){.gb-catalog-account .gb-avatar{width:24px;height:24px}}
+

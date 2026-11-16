@@ -49,3 +49,16 @@
 .gb-account .account-actions { display: flex; flex-wrap: wrap; gap: 8px }
 .gb-account .account-import [role=status]:empty { display: none }
 
+
+.gb-account{background:radial-gradient(ellipse at 32% 12%,#55246dbe,transparent 61%),#14091ec9}
+.gb-account-panel{border-radius:22px;background:#241132}
+.gb-account-brand{background:linear-gradient(156deg,#4a1e61,#230e36 78%)}
+.gb-account .gb-avatar-picker{margin:24px 0 0;padding:16px;min-width:0;border:1px solid #75558c;border-radius:12px}
+.gb-avatar-picker legend{padding-inline:5px;font-weight:750}
+.gb-account .gb-avatar-preview{width:72px;height:72px;margin-bottom:12px}
+.gb-avatar-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:6px;margin-bottom:14px}
+.gb-account .gb-avatar-options button{display:grid;justify-items:center;gap:5px;padding:6px;color:#f8eafa;font-size:.76rem;background:#2e1940;border:1px solid #725685}
+.gb-account .gb-avatar-options button[aria-pressed=true]{border-color:#eedaff;background:#523269}
+.gb-avatar-picker label{margin-bottom:6px}.gb-avatar-picker small{color:#decbea}
+.gb-avatar-picker input[type=file]{height:auto;max-width:100%;line-height:1.35}
+

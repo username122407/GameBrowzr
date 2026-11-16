@@ -12,6 +12,7 @@ export default function Landing({ signedIn, catalogPath }) {
     <header className="gb-header gb-container">
       <a className="gb-brand" href="#/" aria-label="GameBrowzr home"><img src="/gamebrowzr-mark.webp" width="38" height="38" alt="" />Game<span>Browzr</span></a>
       <nav aria-label="Main navigation">
+        <a href={catalogPath}>Explore</a>
         <a href="#features">How it works</a>
         <a className="gb-button gb-outline" href={signedIn ? '#/account' : '#/login'}>{signedIn ? 'My account' : 'Log In'}</a>
       </nav>
@@ -27,8 +28,11 @@ export default function Landing({ signedIn, catalogPath }) {
           </div>
           <small>Browse freely as a guest.</small>
         </div>
-        <div className="gb-hero-art" aria-hidden="true">
+        <div className="gb-hero-visual" aria-hidden="true">
+          <span className="gb-art-compass">✳</span>
+          <div className="gb-hero-art">
           <img src="/aurora-portal.webp" alt="" width="1440" height="960" fetchPriority="high" />
+          </div>
         </div>
       </section>
       <section className="gb-features gb-container" id="features" tabIndex={-1} aria-labelledby="features-title">

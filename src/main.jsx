@@ -1,8 +1,9 @@
-﻿import React, { lazy, Suspense, useEffect, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AccountProvider, useAccount } from './account/AccountProvider.jsx'
 import Landing from './Landing.jsx'
 import './experience.css'
+import AuroraBackground from './AuroraBackground.jsx'
 
 const Catalog = lazy(() => import('./App.jsx'))
 const AccountPage = lazy(() => import('./account/AccountPage.jsx'))
@@ -41,6 +42,7 @@ function GameBrowzr() {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AccountProvider>
+      <AuroraBackground />
       <Suspense fallback={<p className="gb-loading" role="status">Loading GameBrowzr…</p>}>
         <GameBrowzr />
       </Suspense>

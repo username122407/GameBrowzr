@@ -5,6 +5,7 @@ import { demoGames } from './data/demoGames'
 import GameCard from './components/GameCard'
 import { useAccount } from './account/AccountProvider.jsx'
 import { useCollections } from './collections/useCollections.js'
+import { Avatar } from './account/Avatar.jsx'
 import './styles.css'
 
 const GameModal = lazy(() => import('./components/GameModal'))
@@ -339,7 +340,7 @@ export default function App() {
       <header className="studio-topbar">
         <button className="mobile-menu-button" onClick={() => mobileMenuOpen ? closeMobileMenu() : openMobileMenu()} aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation">{mobileMenuOpen ? <X/> : <Menu/>}</button>
         <div className="studio-location"><strong>{activeTab === 'discover' ? (activeQuickExplore || 'Discover') : activeTab === 'wishlist' ? 'Wishlist' : 'My library'}</strong></div>
-        <div className="studio-top-actions"><a className="gb-catalog-account" href={user ? "#/account" : "#/login"}>{user ? "My account" : "Log In"}</a><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{loading ? 'Loading catalog…' : usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
+        <div className="studio-top-actions"><a className="gb-catalog-account" href={user ? "#/account" : "#/login"}>{user && <Avatar client={client} user={user} />}{user ? "My account" : "Log In"}</a><span className="api-status"><span className={`status-dot ${usingDemo ? 'demo' : ''}`} />{loading ? 'Loading catalog…' : usingDemo ? 'Preview catalog' : 'IGDB connected'}</span></div>
       </header>
       <main id="main-content" tabIndex={-1}>
         {activeTab === 'discover' && !activeQuickExplore && <section className="studio-intro gb-discover-heading"><h1>Discover games</h1><p>Browse the catalog or jump into a genre.</p></section>}
