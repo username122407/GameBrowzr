@@ -243,7 +243,7 @@ export default function App() {
   }, [activeTab, hasMore, usingDemo, loading, loadingMore, loadMore, visibleCount, games.length, appendFailed])
 
   // Never show a spotlight title in Smart Discovery, and skip failed images.
-  const spotlightGames = useMemo(() => spotlightCandidates.filter(game => game.spotlight_image && !spotlightBroken.includes(game.id)).slice(0, 5), [spotlightCandidates, spotlightBroken])
+  const spotlightGames = useMemo(() => spotlightCandidates.filter(game => game.spotlight_image || game.background_image).slice(0, 5), [spotlightCandidates])
   const spotlightIds = useMemo(() => new Set(spotlightCandidates.map(game => game.id)), [spotlightCandidates])
   const featured = spotlightGames[featuredIndex % Math.max(1, spotlightGames.length)]
   useEffect(() => { setFeaturedIndex(0) }, [spotlightGames.length])
@@ -410,7 +410,24 @@ export default function App() {
         {showDiscovery && <div className="gb-discover-search">{filters}</div>}
         {activeTab === 'discover' && !activeQuickExplore && <div className="gb-discover-feature"><section className="spotlight-area" aria-label="Featured games">
           <div className="spotlight-main" tabIndex={0} aria-label="Featured games. Use left and right arrow keys to navigate." onKeyDown={event => { if(event.key === 'ArrowLeft'){event.preventDefault();moveSpotlight(-1)} if(event.key === 'ArrowRight'){event.preventDefault();moveSpotlight(1)} }}>
-            <div className="spotlight-image-stack" aria-hidden="true">{spotlightGames.map((game, index) => <div key={game.id} className={`spotlight-frame spotlight-layer ${index === featuredIndex ? 'is-active' : ''}`}><img className="spotlight-fill" src={game.spotlight_image} alt="" aria-hidden="true" loading={index < 2 ? 'eager' : 'lazy'} decoding="async"/><img className="spotlight-art" src={game.spotlight_image} alt="" loading={index < 2 ? 'eager' : 'lazy'} decoding="async" onError={() => setSpotlightBroken(current => current.includes(game.id) ? current : [...current, game.id])}/></div>)}</div>
+            <div className="spotlight-image-stack" aria-hidden="true">
+              {spotlightGames.map((game, index) => {
+                const artwork = spotlightBroken.includes(game.id) ? game.background_image : game.spotlight_image || game.background_image
+                const active = index === featuredIndex
+                return <div key={game.id} className={`spotlight-frame spotlight-layer ${active ? 'is-active' : ''}`}>
+                  {artwork && <>
+                    <img className="spotlight-fill" src={artwork} alt="" loading={active ? 'eager' : 'lazy'} decoding="async" />
+                    <img className="spotlight-art" src={artwork} alt="" loading={active ? 'eager' : 'lazy'} decoding="async"
+                      fetchPriority={active ? 'high' : 'low'}
+                      onError={() => {
+                        if (artwork !== game.background_image) {
+                          setSpotlightBroken(current => current.includes(game.id) ? current : [...current, game.id])
+                        }
+                      }} />
+                  </>}
+                </div>
+              })}
+            </div>
             <div className="spotlight-overlay" aria-hidden="true" />
             <div key={featured?.id || "empty"} className="spotlight-content cinematic-copy"><span className="spotlight-pill"><Flame size={13}/> IN THE SPOTLIGHT</span><h2>{featured?.name || 'Your universe of games'}</h2><p>{featured ? `${featured.genres?.slice(0,3).map(g=>g.name).join(' · ') || 'Discover something new'}  ${featured.released ? ' · '+featured.released.slice(0,4) : ''}` : 'Explore unforgettable worlds across every platform.'}</p><button className="spotlight-action" disabled={!featured} onClick={() => featured && setSelectedGame(featured)}>Explore game <ArrowRight size={16}/></button></div>
             {spotlightGames.length > 1 && <div className="spotlight-navigation" aria-label="Spotlight navigation"><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(-1)} aria-label="Previous featured game"><ChevronLeft size={19}/></button><div className="spotlight-dots">{spotlightGames.map((game,i)=><button key={game.id} className={featuredIndex===i?'active':''} onClick={() => setFeaturedIndex(i)} aria-label={`Show ${game.name}`} aria-current={featuredIndex===i?'true':undefined}/>)}</div><button className="spotlight-nav-button" type="button" onClick={() => moveSpotlight(1)} aria-label="Next featured game"><ChevronRight size={19}/></button></div>}

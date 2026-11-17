@@ -54,3 +54,11 @@
   white-space: pre-wrap;
   margin: .5rem 0 0;
 }
+
+.gb-discussion-author {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .65rem;
+}
+.gb-discussion-author time { display: block; }

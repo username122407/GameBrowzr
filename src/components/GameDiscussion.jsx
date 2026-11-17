@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { MessageSquare } from 'lucide-react'
 import { useAccount } from '../account/AccountProvider.jsx'
+import { Avatar } from '../account/Avatar.jsx'
 import './gameDiscussion.css'
 
 const pageSize = 20
@@ -13,6 +14,7 @@ export default function GameDiscussion({ gameId }) {
   const headingId = useId()
   const inputId = useId()
   const [comments, setComments] = useState([])
+  const [avatars, setAvatars] = useState({})
   const [draft, setDraft] = useState('')
   const [limit, setLimit] = useState(pageSize)
   const [refresh, setRefresh] = useState(0)
@@ -38,10 +40,26 @@ export default function GameDiscussion({ gameId }) {
         if (error) throw error
         setComments(data.slice(0, limit))
         setHasMore(data.length > limit)
+        const authors = [...new Set(data.slice(0, limit).map(comment => comment.author_id))]
+        if (authors.length) {
+          void loadAvatars(authors)
+        }
       } catch {
         if (!controller.signal.aborted) setLoadFailed(true)
       } finally {
         if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+    async function loadAvatars(authors) {
+      try {
+        const { data, error } = await client.rpc('gamebrowzr_discussion_avatars', {
+          target_game: gameId, authors,
+        }).abortSignal(controller.signal)
+        if (!controller.signal.aborted && !error) {
+          setAvatars(Object.fromEntries(data.map(row => [row.author_id, row.avatar])))
+        }
+      } catch {
+        // Comments remain readable with the default avatar.
       }
     }
     void load()
@@ -104,7 +122,12 @@ export default function GameDiscussion({ gameId }) {
       {comments.length > 0 && <ul className="gb-discussion-list">
         {comments.map(comment => <li key={comment.id}>
           <div className="gb-discussion-actions">
-            <div><strong>{comment.author_name}</strong> <time dateTime={comment.created_at}>{formatDate.format(new Date(comment.created_at))}</time></div>
+            <div className="gb-discussion-author">
+              {user?.id === comment.author_id
+                ? <Avatar client={client} user={user} />
+                : <span className="gb-avatar" data-avatar={avatars[comment.author_id] || 'orbit'} aria-hidden="true" />}
+              <div><strong>{comment.author_name}</strong> <time dateTime={comment.created_at}>{formatDate.format(new Date(comment.created_at))}</time></div>
+            </div>
             {user?.id === comment.author_id && <button type="button" className="secondary-button" disabled={pending} onClick={() => remove(comment.id)}>Delete comment</button>}
           </div>
           <p>{comment.body}</p>

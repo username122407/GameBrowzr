@@ -693,3 +693,8 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #d2a
 
 .gb-atlas .studio-topbar{background:linear-gradient(104deg,#171025 0%,#211630 54%,#2c1b37 100%)}
 .gb-atlas .site-footer{background:linear-gradient(110deg,#151023,#221831 65%,#2a1a32)}
+
+/* Keep a local backdrop visible while Spotlight artwork loads or is unavailable. */
+.spotlight-image-stack {
+  background: #20132e url('/gamebrowzr-nebula-poster.webp') center / cover no-repeat;
+}
