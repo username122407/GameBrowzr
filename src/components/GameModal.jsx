@@ -1,4 +1,5 @@
 import AuroraSelect from './AuroraSelect'
+import GameDiscussion from './GameDiscussion.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { X, ExternalLink, Star, CalendarDays, Monitor, Heart, PlayCircle, Building2, Search, GitCompareArrows } from 'lucide-react'
 import { getGameDetails } from '../api/igdb'
@@ -56,7 +57,7 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
   useEffect(() => {
     const returnFocus = document.activeElement
     const panel = mediaOpen ? mediaPanel.current : detailsPanel.current
-    const focusable = () => [...panel.querySelectorAll('button:not([disabled]), a[href], iframe, [tabindex="0"]')]
+    const focusable = () => [...panel.querySelectorAll('button:not([disabled]), a[href], textarea:not([disabled]), iframe, [tabindex="0"]')]
       .filter(element => element.tabIndex >= 0 && element.getClientRects().length)
     panel.querySelector('button')?.focus()
     const trapTab = event => {
@@ -170,6 +171,7 @@ export default function GameModal({ game, saved, onClose, onToggleSave, libraryS
             {!loading && uniqueDirectStores.length === 0 && searchStores.length === 0 && <p className="muted">No storefront links are available for this title.</p>}
             <p className="helper-text">Game page opens a game-specific listing supplied by IGDB. Store search opens a search result, not a confirmed product page.</p>
           </div>
+          <GameDiscussion key={game.id} gameId={String(game.id)} />
           <p className="data-credit">Game information and artwork provided by <a href="https://www.igdb.com/" target="_blank" rel="noreferrer">IGDB</a>.</p>
         </div>
         </div>

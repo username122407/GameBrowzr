@@ -1,0 +1,56 @@
+.gb-discussion {
+  margin-block: 1.5rem;
+  padding-block-start: 1.25rem;
+  border-top: 1px solid #58446c;
+}
+.gb-discussion a { color: #e0bdff; text-decoration: underline; }
+.gb-discussion form {
+  display: grid;
+  gap: .55rem;
+  margin-block: 1rem;
+}
+.gb-discussion textarea {
+  width: 100%;
+  min-height: 6rem;
+  resize: vertical;
+  padding: .75rem;
+  border: 1px solid #9474ae;
+  border-radius: .5rem;
+  color: #f7f0ff;
+  background: #191225;
+  font: inherit;
+}
+.gb-discussion :is(textarea, button, a):focus-visible {
+  outline: 2px solid #e0bdff;
+  outline-offset: 3px;
+}
+.gb-discussion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: .65rem;
+}
+.gb-discussion-actions :is(span, time) {
+  color: #cbbbdc;
+  font-size: .875rem;
+}
+.gb-discussion-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: .65rem;
+  margin-block: 1rem;
+}
+.gb-discussion-list li {
+  min-width: 0;
+  border: 1px solid #58446c;
+  background: #191225;
+  border-radius: .5rem;
+  padding: .75rem;
+  overflow-wrap: anywhere;
+}
+.gb-discussion-list p {
+  white-space: pre-wrap;
+  margin: .5rem 0 0;
+}
